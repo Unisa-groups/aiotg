@@ -82,3 +82,9 @@ exclude = '''
   | dist
 )/
 '''
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "testfixtures>=8.3.0",
+]
