@@ -5,6 +5,7 @@ dist
 aiotg.egg-info
 .cache
 .eggs
+uv.lock
 
 ### macOS ###
 *.DS_Store
