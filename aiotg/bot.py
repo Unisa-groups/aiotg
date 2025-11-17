@@ -49,7 +49,10 @@ MESSAGE_UPDATES = [
     "edited_message",
     "channel_post",
     "edited_channel_post",
-    "successful_payment",
+    "callback_query",
+    "chat_member",
+    "my_chat_member",
+    "chat_join_request",
 ]
 
 logger = logging.getLogger("aiotg")
