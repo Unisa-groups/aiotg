@@ -48,6 +48,13 @@ DefaultInlineHandler = Callable[["InlineQuery"], Any]
 RegexInlineHandler = Callable[["InlineQuery", re.Match[str]], Any]
 RegexInlineDecorator = Callable[[RegexInlineHandler], RegexInlineHandler]
 
+# Chosen inline result handlers
+DefaultChosenInlineResultHandler = Callable[["ChosenInlineResult"], Any]
+RegexChosenInlineResultHandler = Callable[["ChosenInlineResult", re.Match[str]], Any]
+RegexChosenInlineResultDecorator = Callable[
+    [RegexChosenInlineResultHandler], RegexChosenInlineResultHandler
+]
+
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
 RETRY_TIMEOUT = 30
@@ -359,32 +366,48 @@ class Bot:
         else:
             raise TypeError("str expected {} given".format(type(callback)))
 
-    def add_chosen_inline_result_callback(self, regexp: str, fn: Callable):
+    def add_chosen_inline_result_callback(
+        self, regexp: str, fn: RegexChosenInlineResultHandler
+    ) -> None:
         """
         Manually register regexp based callback for the ``chosen_inline_result`` updates
         """
         self._chosen_inline_result_callbacks.append((regexp, fn))
 
-    def chosen_inline_result_callback(self, callback: Callable | str) -> Callable:
+    @overload
+    def chosen_inline_result_callback(
+        self, callback: DefaultChosenInlineResultHandler
+    ) -> DefaultChosenInlineResultHandler: ...
+
+    @overload
+    def chosen_inline_result_callback(
+        self, callback: str
+    ) -> RegexChosenInlineResultDecorator: ...
+
+    def chosen_inline_result_callback(
+        self, callback: DefaultChosenInlineResultHandler | str
+    ) -> DefaultChosenInlineResultHandler | RegexChosenInlineResultDecorator:
         """
         Set callback for ``chosen_inline_result`` updates
 
         :Example:
 
         >>> @bot.chosen_inline_result_callback
-        >>> def inc_metric(iq):
+        >>> def inc_metric(cir):
         >>>     metrics[iq.result_id].inc()
 
         >>> @bot.chosen_inline_result_callback(r"myinline-(.+)")
-        >>> def inc_metric(chat, iq, match):
-        >>>     metrics[iq.result_id].inc()
+        >>> def inc_metric(cir, match):
+        >>>     metrics[cir.result_id].inc()
         """
         if callable(callback):
             self._default_chosen_inline_result_callback = callback
             return callback
         elif isinstance(callback, str):
 
-            def decorator(fn: Callable):
+            def decorator(
+                fn: RegexChosenInlineResultHandler,
+            ) -> RegexChosenInlineResultHandler:
                 self.add_chosen_inline_result_callback(callback, fn)
                 return fn
 
