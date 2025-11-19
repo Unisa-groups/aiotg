@@ -1,48 +1,55 @@
 import asyncio
 import os
 import sys
-
 from os.path import realpath
+from typing import Any, Callable, Never, override
 
-from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler as EventHandler
 from watchdog.events import FileSystemEvent as Event
+from watchdog.events import PatternMatchingEventHandler as EventHandler
+from watchdog.observers import Observer
 
 
 # Event handler class for watchdog
 class Handler(EventHandler):
     # Private
-    _future_resolved = False
+    _future_resolved: bool = False
 
-    # Common filetypes to watch
-    patterns = ["*.py", "*.txt", "*.aiml", "*.json", "*.cfg", "*.xml", "*.html"]
-
-    def __init__(self, loop, *args, **kwargs):
-        self.loop = loop
+    def __init__(
+        self, loop: asyncio.AbstractEventLoop, *args: Any, **kwargs: Any
+    ) -> None:
+        self.loop: asyncio.AbstractEventLoop = loop
 
         # awaitable future to race on
-        self.changed = asyncio.Future(loop=loop)
+        self.changed: asyncio.Future[Event] = asyncio.Future(loop=loop)
+
+        # Set default patterns if not provided by the caller, then initialize
+        # the parent class.
+        kwargs.setdefault(
+            "patterns",
+            ["*.py", "*.txt", "*.aiml", "*.json", "*.cfg", "*.xml", "*.html"],
+        )
 
         # Continue init for EventHandler
-        return super(Handler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-    def on_any_event(self, event):
+    @override
+    def on_any_event(self, event: Event):
         # Resolve future
         if isinstance(event, Event) and not self._future_resolved:
             self.loop.call_soon_threadsafe(self.changed.set_result, event)
             self._future_resolved = True
 
 
-def clear_screen():
+def clear_screen() -> None:
     if os.name == "nt":
-        seq = "\x1Bc"
+        seq = "\x1bc"
     else:
-        seq = "\x1B[2J\x1B[H"
+        seq = "\x1b[2J\x1b[H"
 
     sys.stdout.write(seq)
 
 
-def reload():
+def reload() -> Never:
     """Reload process"""
     try:
         # Reload and replace current process
@@ -55,7 +62,11 @@ def reload():
         os._exit(os.EX_OK)
 
 
-async def run_with_reloader(loop, coroutine, cleanup=None, *args, **kwargs):
+async def run_with_reloader(
+    loop: asyncio.AbstractEventLoop,
+    coroutine: asyncio.Task[Any],
+    cleanup: Callable[[], Any] | None = None,
+) -> None:
     """Run coroutine with reloader"""
 
     clear_screen()
@@ -79,7 +90,8 @@ async def run_with_reloader(loop, coroutine, cleanup=None, *args, **kwargs):
     )
 
     # Cleanup
-    cleanup and cleanup()
+    if cleanup:
+        cleanup()
     watcher.stop()
 
     for fut in done:
