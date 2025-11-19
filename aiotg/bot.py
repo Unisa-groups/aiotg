@@ -149,21 +149,17 @@ class Bot:
         }
         self._commands: list[tuple[str, Callable[["Chat", re.Match[str]], Any]]] = []
         self._callbacks: list[tuple[str, RegexCallbackHandler]] = []
-        self._inlines: list[
-            tuple[str, Callable[["InlineQuery", re.Match[str]], Any]]
-        ] = []
+        self._inlines: list[tuple[str, RegexInlineHandler]] = []
         self._chosen_inline_result_callbacks: list[
-            tuple[str, Callable[["ChosenInlineResult", re.Match[str]], Any]]
+            tuple[str, RegexChosenInlineResultHandler]
         ] = []
         self._checkouts: list[
             tuple[str, Callable[["PreCheckoutQuery", re.Match[str]], Any]]
         ] = []
         self._default: Callable[[Chat, TG_Message], Any] = lambda chat, message: None
-        self._default_callback: Callable[[Chat | None, Any], None] = (
-            lambda chat, cq: None
-        )
-        self._default_inline: Callable[["InlineQuery"], None] = lambda iq: None
-        self._default_chosen_inline_result_callback: Callable[[Any], None] = (
+        self._default_callback: DefaultCallbackHandler = lambda chat, cq: None
+        self._default_inline: DefaultInlineHandler = lambda iq: None
+        self._default_chosen_inline_result_callback: DefaultChosenInlineResultHandler = (
             lambda res: None
         )
 
