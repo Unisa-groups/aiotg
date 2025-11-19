@@ -850,8 +850,8 @@ class Bot:
 
 
 class TgBot(Bot):
-    def __init__(self, *args, **kwargs):
-        logger.warning("TgBot is depricated, use Bot instead")
+    def __init__(self, *args: Any, **kwargs: Any):
+        logger.warning("TgBot is deprecated, use Bot instead")
         super().__init__(*args, **kwargs)
 
 
@@ -881,8 +881,8 @@ class InlineQuery:
 
 
 class TgInlineQuery(InlineQuery):
-    def __init__(self, *args, **kwargs):
-        logger.warning("TgInlineQuery is depricated, use InlineQuery instead")
+    def __init__(self, *args: Any, **kwargs: Any):
+        logger.warning("TgInlineQuery is deprecated, use InlineQuery instead")
         super().__init__(*args, **kwargs)
 
 
