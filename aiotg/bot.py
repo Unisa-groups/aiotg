@@ -55,6 +55,11 @@ RegexChosenInlineResultDecorator = Callable[
     [RegexChosenInlineResultHandler], RegexChosenInlineResultHandler
 ]
 
+# Callback handlers
+DefaultCallbackHandler = Callable[["Chat | None", "CallbackQuery"], Any]
+RegexCallbackHandler = Callable[["Chat | None", "CallbackQuery", re.Match[str]], Any]
+RegexCallbackDecorator = Callable[[RegexCallbackHandler], RegexCallbackHandler]
+
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
 RETRY_TIMEOUT = 30
@@ -143,9 +148,7 @@ class Bot:
             mt: no_handle(mt) for mt in MESSAGE_TYPES
         }
         self._commands: list[tuple[str, Callable[["Chat", re.Match[str]], Any]]] = []
-        self._callbacks: list[
-            tuple[str, Callable[["Chat | None", "CallbackQuery", re.Match[str]], Any]]
-        ] = []
+        self._callbacks: list[tuple[str, RegexCallbackHandler]] = []
         self._inlines: list[
             tuple[str, Callable[["InlineQuery", re.Match[str]], Any]]
         ] = []
@@ -415,13 +418,21 @@ class Bot:
         else:
             raise TypeError("str expected {} given".format(type(callback)))
 
-    def add_callback(self, regexp: str, fn: Callable) -> None:
+    def add_callback(self, regexp: str, fn: RegexCallbackHandler) -> None:
         """
         Manually register regexp based callback
         """
         self._callbacks.append((regexp, fn))
 
-    def callback(self, callback: Callable | str) -> Callable:
+    @overload
+    def callback(self, callback: DefaultCallbackHandler) -> DefaultCallbackHandler: ...
+
+    @overload
+    def callback(self, callback: str) -> RegexCallbackDecorator: ...
+
+    def callback(
+        self, callback: DefaultCallbackHandler | str
+    ) -> DefaultCallbackHandler | RegexCallbackDecorator:
         """
         Set callback for callback queries
 
@@ -440,7 +451,7 @@ class Bot:
             return callback
         elif isinstance(callback, str):
 
-            def decorator(fn: Callable) -> Callable:
+            def decorator(fn: RegexCallbackHandler) -> RegexCallbackHandler:
                 self.add_callback(callback, fn)
                 return fn
 
