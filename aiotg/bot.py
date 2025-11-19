@@ -143,7 +143,7 @@ class Bot:
         self._checkouts: list[
             tuple[str, Callable[["PreCheckoutQuery", re.Match[str]], Any]]
         ] = []
-        self._default: Callable[[Chat, Any], None] = lambda chat, message: None
+        self._default: Callable[[Chat, TG_Message], Any] = lambda chat, message: None
         self._default_callback: Callable[[Chat | None, Any], None] = (
             lambda chat, cq: None
         )
@@ -290,7 +290,9 @@ class Bot:
 
         return decorator
 
-    def default(self, callback: Callable) -> Callable:
+    def default(
+        self, callback: Callable[["Chat", TG_Message], Any]
+    ) -> Callable[["Chat", TG_Message], Any]:
         """
         Set callback for default command that is called on unrecognized
         commands for 1-to-1 chats
