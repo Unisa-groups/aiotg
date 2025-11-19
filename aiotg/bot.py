@@ -1,5 +1,3 @@
-# pyright: reportMissingTypeArgument = false, reportUnnecessaryIsInstance = false, reportUnreachable = false
-
 import asyncio
 import json
 import logging
@@ -674,7 +672,7 @@ class Bot:
         """
         return self.api_call("getUserProfilePhotos", user_id=str(user_id), **options)
 
-    def track(self, message: TG_Message, name: str = "Message") -> None:  # pyright: ignore[reportUnusedParameter]
+    def track(self, message: TG_Message, name: str = "Message") -> None:
         # TODO allow configuring custom tracking
         pass
 
