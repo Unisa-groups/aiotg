@@ -3,7 +3,12 @@ from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any, Literal, Unpack, override
 
 from .types_ import (
+    TG_BoolResponse,
     TG_EditMessageTextOpts,
+    TG_GetChatAdministratorResponse,
+    TG_GetChatMemberCountResponse,
+    TG_GetChatMemberResponse,
+    TG_GetChatResponse,
     TG_InlineKeyboardMarkup,
     TG_MaybeInaccessibleMessage,
     TG_MessageResponse,
@@ -14,6 +19,7 @@ from .types_ import (
     TG_SendFileInput,
     TG_SendLocationOpts,
     TG_SendMediaGroupOpts,
+    TG_SendMediaGroupResponse,
     TG_SendMessageOpts,
     TG_SendPhotoOpts,
     TG_SendStickerOpts,
@@ -74,14 +80,7 @@ class Chat:
         if markup is not None:
             opts["reply_markup"] = markup
 
-        return self.send_text(
-            text,
-            **opts,
-            # reply_to_message_id=self.message["message_id"],
-            # disable_web_page_preview=True,
-            # reply_markup=self.bot.json_serialize(markup),
-            # parse_mode=parse_mode,
-        )
+        return self.send_text(text, **opts)
 
     def edit_text(
         self,
@@ -89,7 +88,7 @@ class Chat:
         text: str,
         markup: TG_InlineKeyboardMarkup | None = None,
         parse_mode: Literal["Markdown", "HTML"] | None = None,
-    ):
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Edit the message in this chat.
 
@@ -104,19 +103,12 @@ class Chat:
             opts["reply_markup"] = markup
         if parse_mode is not None:
             opts["parse_mode"] = parse_mode
-        # if markup is None:
-        #     markup = {}
 
-        return self.bot.edit_message_text(
-            self.id,
-            message_id,
-            text,
-            **opts,
-            # reply_markup=self.bot.json_serialize(markup),
-            # parse_mode=parse_mode,
-        )
+        return self.bot.edit_message_text(self.id, message_id, text, **opts)
 
-    def edit_reply_markup(self, message_id: int, markup: TG_ReplyMarkupOpts):
+    def edit_reply_markup(
+        self, message_id: int, markup: TG_ReplyMarkupOpts
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Edit only reply markup of the message in this chat.
 
@@ -127,25 +119,25 @@ class Chat:
             self.id, message_id, reply_markup=self.bot.json_serialize(markup)
         )
 
-    def get_chat(self):
+    def get_chat(self) -> Awaitable[TG_GetChatResponse]:
         """
         Get information about the chat.
         """
         return self.bot.api_call("getChat", chat_id=str(self.id))
 
-    def get_chat_administrators(self):
+    def get_chat_administrators(self) -> Awaitable[TG_GetChatAdministratorResponse]:
         """
         Get a list of administrators in a chat. Chat must not be private.
         """
         return self.bot.api_call("getChatAdministrators", chat_id=str(self.id))
 
-    def get_chat_members_count(self):
+    def get_chat_members_count(self) -> Awaitable[TG_GetChatMemberCountResponse]:
         """
         Get the number of members in a chat.
         """
         return self.bot.api_call("getChatMembersCount", chat_id=str(self.id))
 
-    def get_chat_member(self, user_id: int):
+    def get_chat_member(self, user_id: int) -> Awaitable[TG_GetChatMemberResponse]:
         """
         Get information about a member of a chat.
 
@@ -155,7 +147,9 @@ class Chat:
             "getChatMember", chat_id=str(self.id), user_id=str(user_id)
         )
 
-    def send_sticker(self, sticker: TG_SendFileInput, **options: TG_SendStickerOpts):
+    def send_sticker(
+        self, sticker: TG_SendFileInput, **options: Unpack[TG_SendStickerOpts]
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send a sticker to the chat.
 
@@ -167,7 +161,9 @@ class Chat:
             "sendSticker", chat_id=str(self.id), sticker=sticker, **options
         )
 
-    def send_audio(self, audio: TG_SendFileInput, **options: Unpack[TG_SendAudioOpts]):
+    def send_audio(
+        self, audio: TG_SendFileInput, **options: Unpack[TG_SendAudioOpts]
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send an mp3 audio file to the chat.
 
@@ -189,7 +185,7 @@ class Chat:
         photo: TG_SendFileInput,
         caption: str = "",
         **options: Unpack[TG_SendPhotoOpts],
-    ):
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send a photo to the chat.
 
@@ -212,7 +208,7 @@ class Chat:
         video: TG_SendFileInput,
         caption: str = "",
         **options: Unpack[TG_SendVideoOpts],
-    ):
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send an mp4 video file to the chat.
 
@@ -235,7 +231,7 @@ class Chat:
         document: TG_SendFileInput,
         caption: str = "",
         **options: Unpack[TG_SendDocumentOpts],
-    ):
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send a general file.
 
@@ -257,7 +253,9 @@ class Chat:
             **options,
         )
 
-    def send_voice(self, voice: TG_SendFileInput, **options: Unpack[TG_SendVoiceOpts]):
+    def send_voice(
+        self, voice: TG_SendFileInput, **options: Unpack[TG_SendVoiceOpts]
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send an OPUS-encoded .ogg audio file.
 
@@ -276,7 +274,7 @@ class Chat:
 
     def send_location(
         self, latitude: float, longitude: float, **options: Unpack[TG_SendLocationOpts]
-    ):
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send a point on the map.
 
@@ -300,7 +298,7 @@ class Chat:
         title: str,
         address: str,
         **options: Unpack[TG_SendVenueOpts],
-    ):
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send information about a venue.
 
@@ -323,7 +321,7 @@ class Chat:
 
     def send_contact(
         self, phone_number: str, first_name: str, **options: Unpack[TG_SendContactOpts]
-    ):
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send phone contacts.
 
@@ -352,7 +350,7 @@ class Chat:
             "upload_document",
             "find_location",
         ],
-    ):
+    ) -> Awaitable[TG_BoolResponse]:
         """
         Send a chat action, to tell the user that something is happening on the
         bot's side.
@@ -376,7 +374,7 @@ class Chat:
         disable_notification: bool = False,
         reply_to_message_id: int | None = None,
         **options: Unpack[TG_SendMediaGroupOpts],
-    ):
+    ) -> Awaitable[TG_SendMediaGroupResponse]:
         """
         Send a group of photos or videos as an album
 
@@ -416,7 +414,9 @@ class Chat:
             **options,
         )
 
-    def forward_message(self, from_chat_id: int, message_id: int):
+    def forward_message(
+        self, from_chat_id: int, message_id: int
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Forward a message from another chat to this chat.
 
@@ -430,7 +430,7 @@ class Chat:
             message_id=message_id,
         )
 
-    def kick_chat_member(self, user_id: int):
+    def kick_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
         """
         Use this method to kick a user from a group or a supergroup.
         The bot must be an administrator in the group for this to work.
@@ -439,7 +439,7 @@ class Chat:
         """
         return self.bot.api_call("kickChatMember", chat_id=self.id, user_id=user_id)
 
-    def unban_chat_member(self, user_id: int):
+    def unban_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
         """
         Use this method to unban a previously kicked user in a supergroup.
         The bot must be an administrator in the group for this to work.
@@ -448,7 +448,7 @@ class Chat:
         """
         return self.bot.api_call("unbanChatMember", chat_id=self.id, user_id=user_id)
 
-    def delete_message(self, message_id: int):
+    def delete_message(self, message_id: int) -> Awaitable[TG_BoolResponse]:
         """
         Delete message from this chat
 

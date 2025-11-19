@@ -1060,3 +1060,8 @@ class TG_Update(TypedDict, total=False):
 class TG_UpdateResponse(TypedDict):
     ok: bool
     result: list[TG_Update]
+
+
+class TG_SendMediaGroupResponse(TypedDict):
+    ok: bool
+    result: list[TG_Message]

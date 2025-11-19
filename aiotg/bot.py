@@ -571,7 +571,7 @@ class Bot:
         json_result = await self.api_call("getMe")
         return json_result["result"]
 
-    async def leave_chat(self, chat_id: int) -> bool:
+    async def leave_chat(self, chat_id: int | str) -> bool:
         """
         Use this method for your bot to leave a group, supergroup or channel.
         Returns True on success.
@@ -602,7 +602,7 @@ class Bot:
         message_id: int,
         text: str,
         **options: Unpack[TG_EditMessageTextOpts],
-    ) -> Awaitable[Any]:
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Edit a text message in a chat
 
