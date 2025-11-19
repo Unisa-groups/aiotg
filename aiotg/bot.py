@@ -43,6 +43,11 @@ __author__ = "Stepan Zastupov"
 __copyright__ = "Copyright 2015-2017 Stepan Zastupov"
 __license__ = "MIT"
 
+# Command handlers
+CommandHandler = Callable[["Chat", re.Match[str]], Any]
+CommandDecorator = Callable[[CommandHandler], CommandHandler]
+DefaultHandler = Callable[["Chat", "TG_Message"], Any]
+
 # Inline handlers
 DefaultInlineHandler = Callable[["InlineQuery"], Any]
 RegexInlineHandler = Callable[["InlineQuery", re.Match[str]], Any]
@@ -156,14 +161,14 @@ class Bot:
         self._handlers: dict[str, MessageHandler] = {
             mt: no_handle(mt) for mt in MESSAGE_TYPES
         }
-        self._commands: list[tuple[str, Callable[["Chat", re.Match[str]], Any]]] = []
+        self._commands: list[tuple[str, CommandHandler]] = []
         self._callbacks: list[tuple[str, RegexCallbackHandler]] = []
         self._inlines: list[tuple[str, RegexInlineHandler]] = []
         self._chosen_inline_result_callbacks: list[
             tuple[str, RegexChosenInlineResultHandler]
         ] = []
         self._checkouts: list[tuple[str, RegexCheckoutHandler]] = []
-        self._default: Callable[[Chat, TG_Message], Any] = lambda chat, message: None
+        self._default: DefaultHandler = lambda chat, message: None
         self._default_callback: DefaultCallbackHandler = lambda chat, cq: None
         self._default_inline: DefaultInlineHandler = lambda iq: None
         self._default_chosen_inline_result_callback: DefaultChosenInlineResultHandler = (
@@ -275,19 +280,13 @@ class Bot:
         """
         self.run_webhook(webhook_url="")
 
-    def add_command(
-        self, regexp: str, fn: Callable[["Chat", re.Match[str]], Any]
-    ) -> None:
+    def add_command(self, regexp: str, fn: CommandHandler) -> None:
         """
         Manually register regexp based command
         """
         self._commands.append((regexp, fn))
 
-    def command(
-        self, regexp: str
-    ) -> Callable[
-        [Callable[["Chat", re.Match[str]], Any]], Callable[["Chat", re.Match[str]], Any]
-    ]:
+    def command(self, regexp: str) -> CommandDecorator:
         """
         Register a new command
 
@@ -300,17 +299,13 @@ class Bot:
         >>>     return chat.reply(match.group(1))
         """
 
-        def decorator(
-            fn: Callable[["Chat", re.Match[str]], Any],
-        ) -> Callable[["Chat", re.Match[str]], Any]:
+        def decorator(fn: CommandHandler) -> CommandHandler:
             self.add_command(regexp, fn)
             return fn
 
         return decorator
 
-    def default(
-        self, callback: Callable[["Chat", TG_Message], Any]
-    ) -> Callable[["Chat", TG_Message], Any]:
+    def default(self, callback: DefaultHandler) -> DefaultHandler:
         """
         Set callback for default command that is called on unrecognized
         commands for 1-to-1 chats
@@ -325,9 +320,7 @@ class Bot:
         self._default = callback
         return callback
 
-    def add_inline(
-        self, regexp: str, fn: Callable[["InlineQuery", re.Match[str]], Any]
-    ) -> None:
+    def add_inline(self, regexp: str, fn: RegexInlineHandler) -> None:
         """
         Manually register regexp based callback
         """
