@@ -60,6 +60,11 @@ DefaultCallbackHandler = Callable[["Chat | None", "CallbackQuery"], Any]
 RegexCallbackHandler = Callable[["Chat | None", "CallbackQuery", re.Match[str]], Any]
 RegexCallbackDecorator = Callable[[RegexCallbackHandler], RegexCallbackHandler]
 
+# Checkout handlers
+DefaultCheckoutHandler = Callable[["PreCheckoutQuery"], Any]
+RegexCheckoutHandler = Callable[["PreCheckoutQuery", re.Match[str]], Any]
+RegexCheckoutDecorator = Callable[[RegexCheckoutHandler], RegexCheckoutHandler]
+
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
 RETRY_TIMEOUT = 30
@@ -153,9 +158,7 @@ class Bot:
         self._chosen_inline_result_callbacks: list[
             tuple[str, RegexChosenInlineResultHandler]
         ] = []
-        self._checkouts: list[
-            tuple[str, Callable[["PreCheckoutQuery", re.Match[str]], Any]]
-        ] = []
+        self._checkouts: list[tuple[str, RegexCheckoutHandler]] = []
         self._default: Callable[[Chat, TG_Message], Any] = lambda chat, message: None
         self._default_callback: DefaultCallbackHandler = lambda chat, cq: None
         self._default_inline: DefaultInlineHandler = lambda iq: None
@@ -455,24 +458,27 @@ class Bot:
         else:
             raise TypeError("str expected {} given".format(type(callback)))
 
-    def add_checkout(
-        self, regexp: str, fn: Callable[["PreCheckoutQuery", re.Match[str]], Any]
-    ) -> None:
+    def add_checkout(self, regexp: str, fn: RegexCheckoutHandler) -> None:
         """
         Manually register regexp based checkout handler
         """
         self._checkouts.append((regexp, fn))
 
+    @overload
+    def checkout(self, callback: DefaultCheckoutHandler) -> DefaultCheckoutHandler: ...
+
+    @overload
+    def checkout(self, callback: str) -> RegexCheckoutDecorator: ...
+
     def checkout(
-        self, callback: Callable[["PreCheckoutQuery"], Any] | str
-    ) -> Callable | None:
+        self, callback: DefaultCheckoutHandler | str
+    ) -> DefaultCheckoutHandler | RegexCheckoutDecorator:
         if callable(callback):
-            self._default_checkout: Callable[[PreCheckoutQuery], Any] = callback
+            self._default_checkout: DefaultCheckoutHandler = callback
+            return callback
         elif isinstance(callback, str):
 
-            def decorator(
-                fn: Callable[["PreCheckoutQuery", re.Match[str]], Any],
-            ) -> Callable[["PreCheckoutQuery", re.Match[str]], Any]:
+            def decorator(fn: RegexCheckoutHandler) -> RegexCheckoutHandler:
                 self.add_checkout(callback, fn)
                 return fn
 
