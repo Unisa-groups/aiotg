@@ -119,7 +119,7 @@ class Bot:
         self.json_deserialize: Callable[..., Any] = json_deserialize
         self.default_in_groups: bool = default_in_groups
         self._session: aiohttp.ClientSession | None = None
-        self._cleanups: list[Callable] = []
+        self._cleanups: list[Callable[[], Any]] = []
         self._webhook_uuid: str | None = None
         self._connector: aiohttp.BaseConnector | None = connector
 
@@ -240,7 +240,12 @@ class Bot:
 
             app.on_cleanup.append(lambda _: self.session.close())
             for cleanup_action in self._cleanups:
-                app.on_cleanup.append(cleanup_action)
+                app.on_cleanup.append(
+                    lambda app_instance,
+                    action=cleanup_action: app_instance.loop.run_in_executor(
+                        None, action
+                    )
+                )
 
             web.run_app(app, host=host, port=port, loop=loop)
         else:
@@ -677,7 +682,7 @@ class Bot:
         """
         return self.api_call("deleteWebhook")
 
-    def on_cleanup(self, action: Callable) -> None:
+    def on_cleanup(self, action: Callable[[], Any]) -> None:
         """
         You can set an action that will be executed before closing the loop
 
