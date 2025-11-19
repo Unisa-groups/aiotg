@@ -1,16 +1,43 @@
+# pyright: reportMissingTypeArgument = false
+
+import asyncio
+import json
+import logging
 import os
 import re
-import logging
 import uuid
-import asyncio
+from collections.abc import Awaitable
+from typing import Any, Callable, Unpack
 from urllib.parse import urlparse
 
 import aiohttp
 from aiohttp import web
-import json
+from aiohttp.client import _RequestContextManager
+from aiohttp.client_reqrep import ClientResponse
 
 from .chat import Chat, Sender
 from .reloader import run_with_reloader
+from .types_ import (
+    TG_CallbackQueryOpts,
+    TG_CallbackQuerySrc,
+    TG_ChosenInlineResultSrc,
+    TG_EditMessageReplyMarkupOpts,
+    TG_EditMessageTextOpts,
+    TG_File,
+    TG_GetUserProfilePhotosOpts,
+    TG_InlineQueryAnswerOpts,
+    TG_InlineQueryResult,
+    TG_InlineQuerySrc,
+    TG_Location,
+    TG_Message,
+    TG_MessageResponse,
+    TG_PreCheckoutQuerySrc,
+    TG_SendMessageOpts,
+    TG_SetWebhookOpts,
+    TG_Update,
+    TG_UpdateResponse,
+    TG_User,
+)
 
 __author__ = "Stepan Zastupov"
 __copyright__ = "Copyright 2015-2017 Stepan Zastupov"
@@ -36,6 +63,7 @@ MESSAGE_TYPES = [
     "delete_chat_photo",
     "new_chat_photo",
     "delete_chat_photo",
+    "new_chat_members",
     "new_chat_member",
     "left_chat_member",
     "new_chat_title",
@@ -71,46 +99,60 @@ class Bot:
     :param connector: Custom aiohttp connector
     """
 
-    _running = False
-    _offset = 0
+    _running: bool = False
+    _offset: int = 0
 
     def __init__(
         self,
-        api_token,
-        api_timeout=API_TIMEOUT,
-        name=None,
-        json_serialize=json.dumps,
-        json_deserialize=json.loads,
-        default_in_groups=False,
-        connector=None,
-    ):
-        self.api_token = api_token
-        self.api_timeout = api_timeout
-        self.name = name
-        self.json_serialize = json_serialize
-        self.json_deserialize = json_deserialize
-        self.default_in_groups = default_in_groups
-        self._session = None
-        self._cleanups = []
-        self._webhook_uuid = None
-        self._connector = connector
+        api_token: str,
+        api_timeout: int = API_TIMEOUT,
+        name: str | None = None,
+        json_serialize: Callable[..., str] = json.dumps,
+        json_deserialize: Callable[..., Any] = json.loads,
+        default_in_groups: bool = False,
+        connector: aiohttp.BaseConnector | None = None,
+    ) -> None:
+        self.api_token: str = api_token
+        self.api_timeout: int = api_timeout
+        self.name: str | None = name
+        self.json_serialize: Callable[..., str] = json_serialize
+        self.json_deserialize: Callable[..., Any] = json_deserialize
+        self.default_in_groups: bool = default_in_groups
+        self._session: aiohttp.ClientSession | None = None
+        self._cleanups: list[Callable] = []
+        self._webhook_uuid: str | None = None
+        self._connector: aiohttp.BaseConnector | None = connector
 
-        def no_handle(mt):
+        def no_handle(mt: str) -> Callable[["Chat", Any], None]:
             return lambda chat, msg: logger.debug("no handle for %s", mt)
 
         # Init default handlers and callbacks
-        self._handlers = {mt: no_handle(mt) for mt in MESSAGE_TYPES}
-        self._commands = []
-        self._callbacks = []
-        self._inlines = []
-        self._chosen_inline_result_callbacks = []
-        self._checkouts = []
-        self._default = lambda chat, message: None
-        self._default_callback = lambda chat, cq: None
-        self._default_inline = lambda iq: None
-        self._default_chosen_inline_result_callback = lambda res: None
+        self._handlers: dict[str, Callable[..., None]] = {
+            mt: no_handle(mt) for mt in MESSAGE_TYPES
+        }
+        self._commands: list[tuple[str, Callable[["Chat", re.Match[str]], Any]]] = []
+        self._callbacks: list[
+            tuple[str, Callable[["Chat | None", "CallbackQuery", re.Match[str]], Any]]
+        ] = []
+        self._inlines: list[
+            tuple[str, Callable[["InlineQuery", re.Match[str]], Any]]
+        ] = []
+        self._chosen_inline_result_callbacks: list[
+            tuple[str, Callable[["ChosenInlineResult", re.Match[str]], Any]]
+        ] = []
+        self._checkouts: list[
+            tuple[str, Callable[["PreCheckoutQuery", re.Match[str]], Any]]
+        ] = []
+        self._default: Callable[[Chat, Any], None] = lambda chat, message: None
+        self._default_callback: Callable[[Chat | None, Any], None] = (
+            lambda chat, cq: None
+        )
+        self._default_inline: Callable[["InlineQuery"], None] = lambda iq: None
+        self._default_chosen_inline_result_callback: Callable[[Any], None] = (
+            lambda res: None
+        )
 
-    async def loop(self):
+    async def loop(self) -> None:
         """
         Return bot's main loop as coroutine. Use with asyncio.
 
@@ -131,7 +173,7 @@ class Bot:
             )
             self._process_updates(updates)
 
-    def run(self, debug=False, reload=None):
+    def run(self, debug: bool = False, reload: bool | None = None) -> None:
         """
         Convenience method for running bots in getUpdates mode
 
@@ -175,7 +217,9 @@ class Bot:
             loop.stop()
             loop.close()
 
-    def run_webhook(self, webhook_url, **options):
+    def run_webhook(
+        self, webhook_url: str, **options: Unpack[TG_SetWebhookOpts]
+    ) -> None:
         """
         Convenience method for running bots in webhook mode
 
@@ -202,19 +246,19 @@ class Bot:
         else:
             loop.run_until_complete(self.session.close())
 
-    def stop_webhook(self):
+    def stop_webhook(self) -> None:
         """
         Use to switch from Webhook to getUpdates mode
         """
         self.run_webhook(webhook_url="")
 
-    def add_command(self, regexp, fn):
+    def add_command(self, regexp: str, fn: Callable) -> None:
         """
         Manually register regexp based command
         """
         self._commands.append((regexp, fn))
 
-    def command(self, regexp):
+    def command(self, regexp: str) -> Callable:
         """
         Register a new command
 
@@ -227,13 +271,13 @@ class Bot:
         >>>     return chat.reply(match.group(1))
         """
 
-        def decorator(fn):
+        def decorator(fn: Callable) -> Callable:
             self.add_command(regexp, fn)
             return fn
 
         return decorator
 
-    def default(self, callback):
+    def default(self, callback: Callable) -> Callable:
         """
         Set callback for default command that is called on unrecognized
         commands for 1-to-1 chats
@@ -248,13 +292,15 @@ class Bot:
         self._default = callback
         return callback
 
-    def add_inline(self, regexp, fn):
+    def add_inline(
+        self, regexp: str, fn: Callable[["InlineQuery", re.Match[str]], Any]
+    ) -> None:
         """
         Manually register regexp based callback
         """
         self._inlines.append((regexp, fn))
 
-    def inline(self, callback):
+    def inline(self, callback: Callable | str) -> Callable:
         """
         Set callback for inline queries
 
@@ -277,7 +323,7 @@ class Bot:
             return callback
         elif isinstance(callback, str):
 
-            def decorator(fn):
+            def decorator(fn: Callable) -> Callable:
                 self.add_inline(callback, fn)
                 return fn
 
@@ -285,13 +331,13 @@ class Bot:
         else:
             raise TypeError("str expected {} given".format(type(callback)))
 
-    def add_chosen_inline_result_callback(self, regexp, fn):
+    def add_chosen_inline_result_callback(self, regexp: str, fn: Callable):
         """
         Manually register regexp based callback for the ``chosen_inline_result`` updates
         """
         self._chosen_inline_result_callbacks.append((regexp, fn))
 
-    def chosen_inline_result_callback(self, callback):
+    def chosen_inline_result_callback(self, callback: Callable | str) -> Callable:
         """
         Set callback for ``chosen_inline_result`` updates
 
@@ -310,7 +356,7 @@ class Bot:
             return callback
         elif isinstance(callback, str):
 
-            def decorator(fn):
+            def decorator(fn: Callable):
                 self.add_chosen_inline_result_callback(callback, fn)
                 return fn
 
@@ -318,13 +364,13 @@ class Bot:
         else:
             raise TypeError("str expected {} given".format(type(callback)))
 
-    def add_callback(self, regexp, fn):
+    def add_callback(self, regexp: str, fn: Callable) -> None:
         """
         Manually register regexp based callback
         """
         self._callbacks.append((regexp, fn))
 
-    def callback(self, callback):
+    def callback(self, callback: Callable | str) -> Callable:
         """
         Set callback for callback queries
 
@@ -343,7 +389,7 @@ class Bot:
             return callback
         elif isinstance(callback, str):
 
-            def decorator(fn):
+            def decorator(fn: Callable) -> Callable:
                 self.add_callback(callback, fn)
                 return fn
 
@@ -351,18 +397,24 @@ class Bot:
         else:
             raise TypeError("str expected {} given".format(type(callback)))
 
-    def add_checkout(self, regexp, fn):
+    def add_checkout(
+        self, regexp: str, fn: Callable[["PreCheckoutQuery", re.Match[str]], Any]
+    ) -> None:
         """
         Manually register regexp based checkout handler
         """
         self._checkouts.append((regexp, fn))
 
-    def checkout(self, callback):
+    def checkout(
+        self, callback: Callable[["PreCheckoutQuery"], Any] | str
+    ) -> Callable | None:
         if callable(callback):
-            self._default_checkout = callback
+            self._default_checkout: Callable[[PreCheckoutQuery], Any] = callback
         elif isinstance(callback, str):
 
-            def decorator(fn):
+            def decorator(
+                fn: Callable[["PreCheckoutQuery", re.Match[str]], Any],
+            ) -> Callable[["PreCheckoutQuery", re.Match[str]], Any]:
                 self.add_checkout(callback, fn)
                 return fn
 
@@ -370,7 +422,7 @@ class Bot:
         else:
             raise TypeError("str expected {} given".format(type(callback)))
 
-    def handle(self, msg_type):
+    def handle(self, msg_type: str) -> Callable:
         """
         Set handler for specific message type
 
@@ -381,13 +433,13 @@ class Bot:
         >>>     pass
         """
 
-        def wrap(callback):
+        def wrap(callback: Callable) -> Callable:
             self._handlers[msg_type] = callback
             return callback
 
         return wrap
 
-    def channel(self, channel_name):
+    def channel(self, channel_name: str) -> Chat:
         """
         Construct a Chat object used to post to channel
 
@@ -395,7 +447,7 @@ class Bot:
         """
         return Chat(self, channel_name, "channel")
 
-    def private(self, user_id):
+    def private(self, user_id: str) -> Chat:
         """
         Construct a Chat object used to post direct messages
 
@@ -403,7 +455,7 @@ class Bot:
         """
         return Chat(self, user_id, "private")
 
-    def group(self, group_id):
+    def group(self, group_id: str) -> Chat:
         """
         Construct a Chat object used to post group messages
 
@@ -411,7 +463,7 @@ class Bot:
         """
         return Chat(self, group_id, "group")
 
-    def api_call(self, method, **params):
+    def api_call(self, method: str, **params: Any) -> Awaitable[Any]:
         """
         Call Telegram API.
 
@@ -424,7 +476,7 @@ class Bot:
         # Explicitly ensure that API call is executed
         return asyncio.ensure_future(coro)
 
-    async def _api_call(self, method, **params):
+    async def _api_call(self, method: str, **params: Any) -> Any:
         url = "{0}/bot{1}/{2}".format(API_URL, self.api_token, method)
         logger.debug("api_call %s, %s", method, params)
 
@@ -450,7 +502,7 @@ class Bot:
             logger.error(err_msg)
             raise BotApiError(err_msg, response=response)
 
-    async def get_me(self):
+    async def get_me(self) -> TG_User:
         """
         Returns basic information about the bot
         (see https://core.telegram.org/bots/api#getme)
@@ -458,7 +510,7 @@ class Bot:
         json_result = await self.api_call("getMe")
         return json_result["result"]
 
-    async def leave_chat(self, chat_id):
+    async def leave_chat(self, chat_id: int) -> bool:
         """
         Use this method for your bot to leave a group, supergroup or channel.
         Returns True on success.
@@ -470,7 +522,9 @@ class Bot:
         json_result = await self.api_call("leaveChat", chat_id=chat_id)
         return json_result["result"]
 
-    def send_message(self, chat_id, text, **options):
+    def send_message(
+        self, chat_id: int, text: str, **options: Unpack[TG_SendMessageOpts]
+    ) -> Awaitable[TG_MessageResponse]:
         """
         Send a text message to chat
 
@@ -481,7 +535,13 @@ class Bot:
         """
         return self.api_call("sendMessage", chat_id=chat_id, text=text, **options)
 
-    def edit_message_text(self, chat_id, message_id, text, **options):
+    def edit_message_text(
+        self,
+        chat_id: int,
+        message_id: int,
+        text: str,
+        **options: Unpack[TG_EditMessageTextOpts],
+    ) -> Awaitable[Any]:
         """
         Edit a text message in a chat
 
@@ -495,10 +555,16 @@ class Bot:
             chat_id=chat_id,
             message_id=message_id,
             text=text,
-            **options
+            **options,
         )
 
-    def edit_message_reply_markup(self, chat_id, message_id, reply_markup, **options):
+    def edit_message_reply_markup(
+        self,
+        chat_id: int,
+        message_id: int,
+        reply_markup: str,
+        **options: Unpack[TG_EditMessageReplyMarkupOpts],
+    ) -> Awaitable[Any]:
         """
         Edit a reply markup of message in a chat
 
@@ -512,10 +578,10 @@ class Bot:
             chat_id=chat_id,
             message_id=message_id,
             reply_markup=reply_markup,
-            **options
+            **options,
         )
 
-    async def get_file(self, file_id):
+    async def get_file(self, file_id: int) -> TG_File:
         """
         Get basic information about a file and prepare it for downloading.
 
@@ -525,15 +591,19 @@ class Bot:
         json = await self.api_call("getFile", file_id=file_id)
         return json["result"]
 
-    def download_file(self, file_path, range=None):
+    def download_file(
+        self, file_path: str, range: str | None = None
+    ) -> _RequestContextManager:
         """
         Download a file from Telegram servers
         """
-        headers = {"range": range} if range else None
+        headers: dict[str, Any] | None = {"range": range} if range else None
         url = "{0}/file/bot{1}/{2}".format(API_URL, self.api_token, file_path)
         return self.session.get(url, headers=headers)
 
-    def get_user_profile_photos(self, user_id, **options):
+    def get_user_profile_photos(
+        self, user_id: int, **options: Unpack[TG_GetUserProfilePhotosOpts]
+    ) -> Awaitable[Any]:
         """
         Get a list of profile pictures for a user
 
@@ -543,14 +613,14 @@ class Bot:
         """
         return self.api_call("getUserProfilePhotos", user_id=str(user_id), **options)
 
-    def track(self, message, name="Message"):
+    def track(self, message: TG_Message, name: str = "Message") -> None:
         # TODO allow configuring custom tracking
         pass
 
-    def stop(self):
+    def stop(self) -> None:
         self._running = False
 
-    async def webhook_handle(self, request):
+    async def webhook_handle(self, request: web.Request) -> web.Response:
         """
         aiohttp.web handle for processing web hooks
 
@@ -569,7 +639,9 @@ class Bot:
         self._process_update(update)
         return web.Response()
 
-    def create_webhook_app(self, path, loop=None):
+    def create_webhook_app(
+        self, path: str, loop: asyncio.AbstractEventLoop | None = None
+    ) -> web.Application:
         """
         Shorthand for creating aiohttp.web.Application with registered webhook hanlde
         """
@@ -577,7 +649,9 @@ class Bot:
         app.router.add_route("POST", path, self.webhook_handle)
         return app
 
-    def set_webhook(self, webhook_url, **options):
+    def set_webhook(
+        self, webhook_url: str, **options: Unpack[TG_SetWebhookOpts]
+    ) -> Awaitable[Any]:
         """
         Register you webhook url for Telegram service.
 
@@ -589,13 +663,13 @@ class Bot:
         self._webhook_uuid = options["secret_token"]
         return self.api_call("setWebhook", url=webhook_url, **options)
 
-    def delete_webhook(self):
+    def delete_webhook(self) -> Awaitable[Any]:
         """
         Tell Telegram to switch back to getUpdates mode
         """
         return self.api_call("deleteWebhook")
 
-    def on_cleanup(self, action):
+    def on_cleanup(self, action: Callable) -> None:
         """
         You can set an action that will be executed before closing the loop
 
@@ -608,14 +682,14 @@ class Bot:
         self._cleanups.append(action)
 
     @property
-    def session(self):
+    def session(self) -> aiohttp.ClientSession:
         if not self._session or self._session.closed:
             self._session = aiohttp.ClientSession(
                 json_serialize=self.json_serialize, connector=self._connector
             )
         return self._session
 
-    def _process_message(self, message):
+    def _process_message(self, message: TG_Message):
         chat = Chat.from_message(self, message)
 
         for mt, func in self._handlers.items():
@@ -638,7 +712,7 @@ class Bot:
             self.track(message, "default")
             return self._default(chat, message)
 
-    def _process_inline_query(self, query):
+    def _process_inline_query(self, query: TG_InlineQuerySrc) -> Any:
         iq = InlineQuery(self, query)
 
         for patterns, handler in self._inlines:
@@ -647,7 +721,7 @@ class Bot:
                 return handler(iq, match)
         return self._default_inline(iq)
 
-    def _process_chosen_inline_result(self, result):
+    def _process_chosen_inline_result(self, result: TG_ChosenInlineResultSrc) -> Any:
         cir = ChosenInlineResult(self, result)
         for patterns, handler in self._chosen_inline_result_callbacks:
             match = re.search(patterns, result["query"], re.I)
@@ -655,7 +729,7 @@ class Bot:
                 return handler(cir, match)
         return self._default_chosen_inline_result_callback(cir)
 
-    def _process_callback_query(self, query):
+    def _process_callback_query(self, query: TG_CallbackQuerySrc) -> Any:
         chat = Chat.from_message(self, query["message"]) if "message" in query else None
         cq = CallbackQuery(self, query)
         for patterns, handler in self._callbacks:
@@ -666,7 +740,7 @@ class Bot:
         if chat and not chat.is_group() or self.default_in_groups:
             return self._default_callback(chat, cq)
 
-    def _process_pre_checkout_query(self, query):
+    def _process_pre_checkout_query(self, query: TG_PreCheckoutQuerySrc) -> Any:
         pcq = PreCheckoutQuery(self, query)
 
         for patterns, handler in self._checkouts:
@@ -675,7 +749,7 @@ class Bot:
                 return handler(pcq, match)
         return self._default_checkout(pcq)
 
-    def _process_updates(self, updates):
+    def _process_updates(self, updates: TG_UpdateResponse) -> None:
         if not updates["ok"]:
             logger.error("getUpdates error: %s", updates.get("description"))
             return
@@ -683,7 +757,7 @@ class Bot:
         for update in updates["result"]:
             self._process_update(update)
 
-    def _process_update(self, update):
+    def _process_update(self, update: TG_Update) -> None:
         logger.debug("update %s", update)
 
         # Update offset
@@ -726,18 +800,22 @@ class InlineQuery:
     See https://core.telegram.org/bots/api#inline-mode for details
     """
 
-    def __init__(self, bot, src):
-        self.bot = bot
-        self.sender = Sender(src["from"])
-        self.query_id = src["id"]
-        self.query = src["query"]
+    def __init__(self, bot: "Bot", src: TG_InlineQuerySrc):
+        self.bot: "Bot" = bot
+        self.sender: Sender = Sender(src["from"])
+        self.query_id: str = src["id"]
+        self.query: str = src["query"]
 
-    def answer(self, results, **options):
+    def answer(
+        self,
+        results: list[TG_InlineQueryResult],
+        **options: Unpack[TG_InlineQueryAnswerOpts],
+    ):
         return self.bot.api_call(
             "answerInlineQuery",
             inline_query_id=self.query_id,
             results=self.bot.json_serialize(results),
-            **options
+            **options,
         )
 
 
@@ -748,48 +826,47 @@ class TgInlineQuery(InlineQuery):
 
 
 class ChosenInlineResult:
-    def __init__(self, bot, src):
-        self.bot = bot
-        self.sender = Sender(src["from"])
-        self.result_id = src["result_id"]
-        self.location = src.get("location")
-        self.inline_message_id = src.get("inline_messages_id")
-        self.query = src["query"]
+    def __init__(self, bot: "Bot", src: TG_ChosenInlineResultSrc) -> None:
+        self.bot: "Bot" = bot
+        self.sender: "Sender" = Sender(src["from"])
+        self.result_id: str = src["result_id"]
+        self.location: TG_Location | None = src.get("location")
+        self.inline_message_id: str | None = src.get("inline_message_id")
+        self.query: str = src["query"]
 
 
 class CallbackQuery:
-    def __init__(self, bot, src):
-        self.bot = bot
-        self.query_id = src["id"]
-        self.data = src["data"]
-        self.src = src
+    def __init__(self, bot: "Bot", src: TG_CallbackQuerySrc) -> None:
+        self.bot: "Bot" = bot
+        self.query_id: str = src["id"]
+        self.data: str = src.get("data", "")
+        self.src: TG_CallbackQuerySrc = src
 
-    def answer(self, **options):
+    def answer(self, **options: Unpack[TG_CallbackQueryOpts]):
         return self.bot.api_call(
             "answerCallbackQuery", callback_query_id=self.query_id, **options
         )
 
 
 class PreCheckoutQuery:
-    def __init__(self, bot, src):
-        self.bot = bot
-        self.sender = Sender(src["from"])
-        self.query_id = src["id"]
-        self.currency = src["currency"]
-        self.total_amount = src["total_amount"]
-        self.invoice_payload = src["invoice_payload"]
+    def __init__(self, bot: "Bot", src: TG_PreCheckoutQuerySrc) -> None:
+        self.bot: "Bot" = bot
+        self.sender: Sender = Sender(src["from"])
+        self.query_id: str = src["id"]
+        self.currency: str = src["currency"]
+        self.total_amount: int = src["total_amount"]
+        self.invoice_payload: str = src["invoice_payload"]
 
-    def answer(self, error_message=None, **options):
+    def answer(self, error_message: str | None = None):
         return self.bot.api_call(
             "answerPreCheckoutQuery",
             pre_checkout_query_id=self.query_id,
             ok=error_message is None,
             error_message=error_message,
-            **options
         )
 
 
 class BotApiError(RuntimeError):
-    def __init__(self, *args, response):
+    def __init__(self, *args: object, response: aiohttp.ClientResponse) -> None:
         super().__init__(*args)
-        self.response = response
+        self.response: ClientResponse = response

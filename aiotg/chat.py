@@ -1,4 +1,9 @@
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .bot import Bot
+    from .types_ import TG_MaybeInaccessibleMessage
 
 logger = logging.getLogger("aiotg")
 
@@ -182,7 +187,7 @@ class Chat:
             chat_id=str(self.id),
             document=document,
             caption=caption,
-            **options
+            **options,
         )
 
     def send_voice(self, voice, **options):
@@ -216,7 +221,7 @@ class Chat:
             chat_id=self.id,
             latitude=latitude,
             longitude=longitude,
-            **options
+            **options,
         )
 
     def send_venue(self, latitude, longitude, title, address, **options):
@@ -237,7 +242,7 @@ class Chat:
             longitude=longitude,
             title=title,
             address=address,
-            **options
+            **options,
         )
 
     def send_contact(self, phone_number, first_name, **options):
@@ -254,7 +259,7 @@ class Chat:
             chat_id=self.id,
             phone_number=phone_number,
             first_name=first_name,
-            **options
+            **options,
         )
 
     def send_chat_action(self, action):
@@ -280,7 +285,7 @@ class Chat:
         media: str,
         disable_notification: bool = False,
         reply_to_message_id: int = None,
-        **options
+        **options,
     ):
         """
         Send a group of photos or videos as an album
@@ -318,7 +323,7 @@ class Chat:
             media=media,
             disable_notification=disable_notification,
             reply_to_message_id=reply_to_message_id,
-            **options
+            **options,
         )
 
     def forward_message(self, from_chat_id, message_id):
@@ -383,7 +388,7 @@ class Chat:
         self.type = chat_type
 
     @staticmethod
-    def from_message(bot, message):
+    def from_message(bot: "Bot", message: "TG_MaybeInaccessibleMessage") -> "Chat":
         """
         Create a ``Chat`` object from a message.
 
