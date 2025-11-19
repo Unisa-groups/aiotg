@@ -1,4 +1,4 @@
-# pyright: reportMissingTypeArgument = false
+# pyright: reportMissingTypeArgument = false, reportUnnecessaryIsInstance = false, reportUnreachable = false
 
 import asyncio
 import json
@@ -64,6 +64,10 @@ RegexCallbackDecorator = Callable[[RegexCallbackHandler], RegexCallbackHandler]
 DefaultCheckoutHandler = Callable[["PreCheckoutQuery"], Any]
 RegexCheckoutHandler = Callable[["PreCheckoutQuery", re.Match[str]], Any]
 RegexCheckoutDecorator = Callable[[RegexCheckoutHandler], RegexCheckoutHandler]
+
+# Message handlers
+MessageHandler = Callable[["Chat", Any], Any]
+MessageHandlerDecorator = Callable[[MessageHandler], MessageHandler]
 
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
@@ -145,11 +149,11 @@ class Bot:
         self._webhook_uuid: str | None = None
         self._connector: aiohttp.BaseConnector | None = connector
 
-        def no_handle(mt: str) -> Callable[["Chat", Any], None]:
+        def no_handle(mt: str) -> MessageHandler:
             return lambda chat, msg: logger.debug("no handle for %s", mt)
 
         # Init default handlers and callbacks
-        self._handlers: dict[str, Callable[..., None]] = {
+        self._handlers: dict[str, MessageHandler] = {
             mt: no_handle(mt) for mt in MESSAGE_TYPES
         }
         self._commands: list[tuple[str, Callable[["Chat", re.Match[str]], Any]]] = []
@@ -486,7 +490,7 @@ class Bot:
         else:
             raise TypeError("str expected {} given".format(type(callback)))
 
-    def handle(self, msg_type: str) -> Callable:
+    def handle(self, msg_type: str) -> MessageHandlerDecorator:
         """
         Set handler for specific message type
 
@@ -497,7 +501,7 @@ class Bot:
         >>>     pass
         """
 
-        def wrap(callback: Callable) -> Callable:
+        def wrap(callback: MessageHandler) -> MessageHandler:
             self._handlers[msg_type] = callback
             return callback
 
@@ -677,7 +681,7 @@ class Bot:
         """
         return self.api_call("getUserProfilePhotos", user_id=str(user_id), **options)
 
-    def track(self, message: TG_Message, name: str = "Message") -> None:
+    def track(self, message: TG_Message, name: str = "Message") -> None:  # pyright: ignore[reportUnusedParameter]
         # TODO allow configuring custom tracking
         pass
 
