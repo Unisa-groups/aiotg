@@ -7,7 +7,7 @@ import os
 import re
 import uuid
 from collections.abc import Awaitable
-from typing import Any, Callable, Unpack
+from typing import Any, Callable, Unpack, overload
 from urllib.parse import urlparse
 
 import aiohttp
@@ -42,6 +42,11 @@ from .types_ import (
 __author__ = "Stepan Zastupov"
 __copyright__ = "Copyright 2015-2017 Stepan Zastupov"
 __license__ = "MIT"
+
+# Inline handlers
+DefaultInlineHandler = Callable[["InlineQuery"], Any]
+RegexInlineHandler = Callable[["InlineQuery", re.Match[str]], Any]
+RegexInlineDecorator = Callable[[RegexInlineHandler], RegexInlineHandler]
 
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
@@ -315,7 +320,15 @@ class Bot:
         """
         self._inlines.append((regexp, fn))
 
-    def inline(self, callback: Callable | str) -> Callable:
+    @overload
+    def inline(self, callback: DefaultInlineHandler) -> DefaultInlineHandler: ...
+
+    @overload
+    def inline(self, callback: str) -> RegexInlineDecorator: ...
+
+    def inline(
+        self, callback: DefaultInlineHandler | str
+    ) -> DefaultInlineHandler | RegexInlineDecorator:
         """
         Set callback for inline queries
 
@@ -338,7 +351,7 @@ class Bot:
             return callback
         elif isinstance(callback, str):
 
-            def decorator(fn: Callable) -> Callable:
+            def decorator(fn: RegexInlineHandler) -> RegexInlineHandler:
                 self.add_inline(callback, fn)
                 return fn
 
