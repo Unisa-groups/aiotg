@@ -11,9 +11,8 @@ from typing import Any, Callable, Unpack, overload
 from urllib.parse import urlparse
 
 import aiohttp
-from aiohttp import web
+from aiohttp import ClientResponse, web
 from aiohttp.client import _RequestContextManager
-from aiohttp.client_reqrep import ClientResponse
 
 from .chat import Chat, Sender
 from .reloader import run_with_reloader
@@ -541,7 +540,8 @@ class Bot:
         url = "{0}/bot{1}/{2}".format(API_URL, self.api_token, method)
         logger.debug("api_call %s, %s", method, params)
 
-        response = await self.session.post(url, data=params)
+        # response = await self.session.post(url, data=params)
+        response = await self.session.post(url, json=params)
 
         if response.status == 200:
             return await response.json(loads=self.json_deserialize)
