@@ -252,13 +252,19 @@ class Bot:
         """
         self.run_webhook(webhook_url="")
 
-    def add_command(self, regexp: str, fn: Callable) -> None:
+    def add_command(
+        self, regexp: str, fn: Callable[["Chat", re.Match[str]], Any]
+    ) -> None:
         """
         Manually register regexp based command
         """
         self._commands.append((regexp, fn))
 
-    def command(self, regexp: str) -> Callable:
+    def command(
+        self, regexp: str
+    ) -> Callable[
+        [Callable[["Chat", re.Match[str]], Any]], Callable[["Chat", re.Match[str]], Any]
+    ]:
         """
         Register a new command
 
@@ -271,7 +277,9 @@ class Bot:
         >>>     return chat.reply(match.group(1))
         """
 
-        def decorator(fn: Callable) -> Callable:
+        def decorator(
+            fn: Callable[["Chat", re.Match[str]], Any],
+        ) -> Callable[["Chat", re.Match[str]], Any]:
             self.add_command(regexp, fn)
             return fn
 
