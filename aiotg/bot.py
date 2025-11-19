@@ -584,7 +584,7 @@ class Bot:
         return json_result["result"]
 
     def send_message(
-        self, chat_id: int, text: str, **options: Unpack[TG_SendMessageOpts]
+        self, chat_id: int | str, text: str, **options: Unpack[TG_SendMessageOpts]
     ) -> Awaitable[TG_MessageResponse]:
         """
         Send a text message to chat
@@ -598,7 +598,7 @@ class Bot:
 
     def edit_message_text(
         self,
-        chat_id: int,
+        chat_id: int | str,
         message_id: int,
         text: str,
         **options: Unpack[TG_EditMessageTextOpts],
@@ -621,7 +621,7 @@ class Bot:
 
     def edit_message_reply_markup(
         self,
-        chat_id: int,
+        chat_id: int | str,
         message_id: int,
         reply_markup: str,
         **options: Unpack[TG_EditMessageReplyMarkupOpts],

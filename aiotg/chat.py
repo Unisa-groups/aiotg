@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Awaitable
-from typing import TYPE_CHECKING, Any, Literal, Unpack
+from typing import TYPE_CHECKING, Any, Literal, Unpack, override
 
 from .types_ import (
     TG_EditMessageTextOpts,
@@ -469,7 +469,7 @@ class Chat:
     def __init__(
         self,
         bot: "Bot",
-        chat_id: int,
+        chat_id: int | str,
         chat_type: Literal["private", "group", "supergroup", "channel"] = "private",
         src_message: TG_MaybeInaccessibleMessage | None = None,
     ):
@@ -480,7 +480,7 @@ class Chat:
         else:
             sender = {"first_name": "N/A"}
         self.sender: "Sender" = Sender(sender)
-        self.id: int = chat_id
+        self.id: int | str = chat_id
         self.type: Literal["private", "group", "supergroup", "channel"] = chat_type
 
     @staticmethod
@@ -502,10 +502,11 @@ class TgChat(Chat):
         super().__init__(*args, **kwargs)
 
 
-class Sender(dict):
+class Sender(dict[str, Any]):
     """A small wrapper for sender info, mostly used for logging"""
 
-    def __repr__(self):
+    @override
+    def __repr__(self) -> str:
         uname = " (%s)" % self["username"] if "username" in self else ""
         return self["first_name"] + uname
 
