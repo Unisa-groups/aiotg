@@ -13,6 +13,11 @@ class MockBot(Bot):
     @override
     def api_call(self, method: str, **params: Any) -> Awaitable[Any]:
         self.calls[method] = params
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
         future: asyncio.Future[Any] = asyncio.Future()
         future.set_result("1")
         return future
