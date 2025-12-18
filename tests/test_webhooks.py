@@ -1,9 +1,14 @@
 import asyncio
-import pytest
+import re
+from threading import Event, Thread
 from urllib.parse import urlparse
+
+import pytest
 from aiohttp import web
+
+from aiotg.bot import Bot
+from aiotg.chat import Chat
 from aiotg.mock import MockBot
-from threading import Thread, Event
 
 # ⚠️  beware, this test is a total hack ⚠️
 
@@ -11,7 +16,7 @@ webhook_url = "http://localhost:6666/webhook"
 server_started = Event()
 
 
-def bot_loop(bot):
+def bot_loop(bot: Bot) -> None:
     url = urlparse(webhook_url)
     loop = asyncio.new_event_loop()
     app = bot.create_webhook_app(url.path, loop)
@@ -25,7 +30,7 @@ def test_webhooks_integration():
     called_with = None
 
     @bot.command(r"/echo (.+)")
-    def echo(chat, match):
+    def _(chat: Chat, match: re.Match[str]) -> None:
         nonlocal called_with
         called_with = match.group(1)
         # Let's check sender repr as well
@@ -54,14 +59,14 @@ def test_webhooks_integration():
     assert called_with == "foo"
 
 
-def test_set_webhook():
+def test_set_webhook() -> None:
     bot = MockBot()
     bot.set_webhook(webhook_url)
     assert "setWebhook" in bot.calls
     assert "secret_token" in bot.calls["setWebhook"]
 
 
-def test_delete_webhook():
+def test_delete_webhook() -> None:
     bot = MockBot()
     bot.delete_webhook()
     assert "deleteWebhook" in bot.calls

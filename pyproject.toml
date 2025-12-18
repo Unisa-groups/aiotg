@@ -27,6 +27,7 @@ dependencies = [
     "aiohttp>=3.8.0",
     "watchdog>=0.9.0",
 ]
+requires-python = ">= 3.11"
 
 [project.urls]
 Homepage = "http://szastupov.github.io/aiotg"

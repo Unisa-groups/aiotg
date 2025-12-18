@@ -1,51 +1,75 @@
-import pytest
 import random
+import re
+from typing import Any, Literal, NewType, cast
 
-from aiotg import Bot, Chat, InlineQuery
-from aiotg import MESSAGE_TYPES, MESSAGE_UPDATES
-from aiotg.mock import MockBot
+import pytest
 from testfixtures import LogCapture
+
+from aiotg import MESSAGE_TYPES, MESSAGE_UPDATES, Bot, Chat, InlineQuery
+from aiotg.bot import CallbackQuery, ChosenInlineResult
+from aiotg.mock import MockBot
+from aiotg.types_ import (
+    TG_CallbackQuerySrc,
+    TG_ChosenInlineResultSrc,
+    TG_InlineKeyboardMarkup,
+    TG_InlineQuerySrc,
+    TG_Message,
+    TG_Response_Failure,
+    TG_Update,
+    TG_UpdateResponse,
+)
 
 API_TOKEN = "test_token"
 bot = Bot(API_TOKEN)
 
 
-def custom_msg(msg):
-    template = {
+def custom_msg(msg: dict[Any, Any]) -> TG_Message:
+    template: TG_Message = {
         "message_id": 0,
-        "from": {"first_name": "John"},
+        "from": {"first_name": "John", "is_bot": False, "id": 123},
         "chat": {"id": 0, "type": "private"},
+        "date": 0,
     }
     template.update(msg)
     return template
 
 
-def text_msg(text):
+def text_msg(text: str) -> TG_Message:
     return custom_msg({"text": text})
 
 
-def inline_query(query):
-    return {"from": {"first_name": "John"}, "offset": "", "query": query, "id": "9999"}
-
-
-def chosen_inline_result(query):
-    return {"from": {"first_name": "John"}, "query": query, "result_id": "9999"}
-
-
-def callback_query(data):
+def inline_query(query: str) -> TG_InlineQuerySrc:
     return {
-        "from": {"first_name": "John"},
-        "data": data,
+        "from": {"first_name": "John", "is_bot": False, "id": 123},
+        "offset": "",
+        "query": query,
         "id": "9999",
-        "message": custom_msg({}),
     }
 
 
-def test_command():
-    called_with = None
+def chosen_inline_result(query: str) -> TG_ChosenInlineResultSrc:
+    return {
+        "from": {"first_name": "John", "is_bot": False, "id": 123},
+        "query": query,
+        "result_id": "9999",
+    }
+
+
+def callback_query(data: str) -> TG_CallbackQuerySrc:
+    return {
+        "from": {"first_name": "John", "is_bot": False, "id": 123},
+        "data": data,
+        "id": "9999",
+        "message": custom_msg({}),
+        "chat_instance": "",
+    }
+
+
+def test_command() -> None:
+    called_with: str | None = None
 
     @bot.command(r"/echo (.+)")
-    def echo(chat, match):
+    def _(chat: Chat, match: re.Match[str]) -> None:
         nonlocal called_with
         called_with = match.group(1)
         # Let's check sender repr as well
@@ -55,23 +79,23 @@ def test_command():
     assert called_with == "foo"
 
 
-def test_default():
-    called_with = None
+def test_default() -> None:
+    called_with: str | None = None
 
     @bot.default
-    def default(chat, message):
+    def _(_chat: Chat, message: TG_Message) -> None:
         nonlocal called_with
-        called_with = message["text"]
+        called_with = message.get("text")
 
     bot._process_message(text_msg("foo bar"))
     assert called_with == "foo bar"
 
 
-def test_default_inline():
-    called_with = None
+def test_default_inline() -> None:
+    called_with: str | None = None
 
     @bot.inline
-    def inline(query):
+    def _(query: InlineQuery) -> None:
         nonlocal called_with
         called_with = query.query
 
@@ -80,10 +104,10 @@ def test_default_inline():
 
 
 def test_inline():
-    called_with = None
+    called_with: str | None = None
 
     @bot.inline(r"query-(\w+)")
-    def inline(query, match):
+    def _(_query: InlineQuery, match: re.Match[str]) -> None:
         nonlocal called_with
         called_with = match.group(1)
 
@@ -92,10 +116,10 @@ def test_inline():
 
 
 def test_default_chosen_inline_result():
-    called_with = None
+    called_with: str | None = None
 
     @bot.chosen_inline_result_callback
-    def chosen_inline_result_callback(query):
+    def _(query: ChosenInlineResult) -> None:
         nonlocal called_with
         called_with = query.query
 
@@ -103,11 +127,11 @@ def test_default_chosen_inline_result():
     assert called_with == "foo bar"
 
 
-def test_chosen_inline_result():
-    called_with = None
+def test_chosen_inline_result() -> None:
+    called_with: str | None = None
 
     @bot.chosen_inline_result_callback(r"query-(\w+)")
-    def chosen_inline_result_callback(query, match):
+    def _(_query: ChosenInlineResult, match: re.Match[str]) -> None:
         nonlocal called_with
         called_with = match.group(1)
 
@@ -115,15 +139,15 @@ def test_chosen_inline_result():
     assert called_with == "foo"
 
 
-def test_callback_default():
+def test_callback_default() -> None:
     bot._process_callback_query(callback_query("foo"))
 
 
-def test_default_callback():
-    called_with = None
+def test_default_callback() -> None:
+    called_with: str | None = None
 
     @bot.callback
-    def callback(chat, cq):
+    def _(_chat: Chat | None, cq: CallbackQuery) -> None:
         nonlocal called_with
         called_with = cq.data
 
@@ -131,11 +155,11 @@ def test_default_callback():
     assert called_with == "foo"
 
 
-def test_callback():
-    called_with = None
+def test_callback() -> None:
+    called_with: str | None = None
 
     @bot.callback(r"click-(\w+)")
-    def click_callback(chat, cq, match):
+    def _(_chat: Chat | None, _cq: CallbackQuery, match: re.Match[str]) -> None:
         nonlocal called_with
         called_with = match.group(1)
 
@@ -144,22 +168,24 @@ def test_callback():
 
 
 @pytest.mark.parametrize("upd_type", MESSAGE_UPDATES)
-def test_message_updates(upd_type):
-    update = {"update_id": 0, upd_type: text_msg("foo bar")}
-    updates = {"result": [update], "ok": True}
-    called_with = None
+def test_message_updates(upd_type: str) -> None:
+    update: TG_Update = cast(
+        TG_Update, cast(object, {"update_id": 0, upd_type: text_msg("foo bar")})
+    )
+    updates: TG_UpdateResponse = {"result": [update], "ok": True}
+    called_with: str | None = None
 
     @bot.default
-    def default(chat, message):
+    def _(_chat: Chat, message: TG_Message) -> None:
         nonlocal called_with
-        called_with = message["text"]
+        called_with = message.get("text")
 
     bot._process_updates(updates)
     assert called_with == "foo bar"
 
 
-def test_updates_failed():
-    updates = {"ok": False, "description": "Opps"}
+def test_updates_failed() -> None:
+    updates: TG_Response_Failure = {"ok": False, "description": "Opps"}
 
     with LogCapture() as log:
         bot._process_updates(updates)
@@ -167,11 +193,12 @@ def test_updates_failed():
 
 
 @pytest.mark.parametrize("mt", MESSAGE_TYPES)
-def test_handle(mt):
-    called_with = None
+def test_handle(mt: str):
+    T = NewType("T", float)
+    called_with: T | None = None
 
     @bot.handle(mt)
-    def handle(chat, media):
+    def _(_chat: Chat, media: T) -> None:
         nonlocal called_with
         called_with = media
 
@@ -183,7 +210,9 @@ def test_handle(mt):
 @pytest.mark.parametrize(
     "ctype,id", [("channel", "@foobar"), ("private", "111111"), ("group", "222222")]
 )
-def test_channel_constructors(ctype, id):
+def test_channel_constructors(
+    ctype: Literal["private", "group", "supergroup", "channel"], id: int
+) -> None:
     chat = getattr(bot, ctype)(id)
     assert chat.id == id
     assert chat.type == ctype
@@ -282,8 +311,16 @@ def test_edit_reply_markup():
     message_id = 1337
     chat = Chat(bot, chat_id)
 
-    chat.edit_reply_markup(message_id, {"inline_keyboard": [["ok", "cancel"]]})
+    markup: TG_InlineKeyboardMarkup = {
+        "inline_keyboard": [[{"text": "ok"}, {"text": "cancel"}]]
+    }
+
+    chat.edit_reply_markup(message_id, markup)
     assert "editMessageReplyMarkup" in bot.calls
     call = bot.calls["editMessageReplyMarkup"]
-    assert call["reply_markup"] == '{"inline_keyboard": [["ok", "cancel"]]}'
+    assert (
+        call["reply_markup"]
+        == '{"inline_keyboard": [[{"text": "ok"}, {"text": "cancel"}]]}'
+    )
+    # assert call["reply_markup"] == '{"inline_keyboard": [["ok", "cancel"]]}'
     assert call["message_id"] == message_id
