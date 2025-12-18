@@ -1057,9 +1057,18 @@ class TG_Update(TypedDict, total=False):
     removed_chat_boost: TG_ChatBoostRemoved
 
 
-class TG_UpdateResponse(TypedDict):
-    ok: bool
+class TG_UpdateResponse_Success(TypedDict):
+    ok: Literal[True]
     result: list[TG_Update]
+    description: NotRequired[str]
+
+
+class TG_Response_Failure(TypedDict):
+    ok: Literal[False]
+    description: NotRequired[str]
+
+
+TG_UpdateResponse = TG_UpdateResponse_Success | TG_Response_Failure
 
 
 class TG_SendMediaGroupResponse(TypedDict):
