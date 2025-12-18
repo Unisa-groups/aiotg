@@ -295,8 +295,8 @@ class Chat:
         self,
         latitude: float,
         longitude: float,
-        title: str,
-        address: str,
+        title: str | bytes,
+        address: str | bytes,
         **options: Unpack[TG_SendVenueOpts],
     ) -> Awaitable[TG_MessageResponse]:
         """
@@ -320,7 +320,10 @@ class Chat:
         )
 
     def send_contact(
-        self, phone_number: str, first_name: str, **options: Unpack[TG_SendContactOpts]
+        self,
+        phone_number: str,
+        first_name: str | bytes,
+        **options: Unpack[TG_SendContactOpts],
     ) -> Awaitable[TG_MessageResponse]:
         """
         Send phone contacts.
