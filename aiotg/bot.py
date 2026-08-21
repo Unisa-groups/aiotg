@@ -316,6 +316,31 @@ class Bot:
         self._default = callback
         return callback
 
+    def _register(
+        self,
+        default_attr: str,
+        add: Callable[[str, Any], None],
+        callback: Callable[..., Any] | str,
+    ) -> Any:
+        """
+        Shared implementation for the inline/callback/chosen_inline_result_callback/
+        checkout decorators: set ``default_attr`` when called with a callback
+        directly, or register a regexp handler via ``add`` when called with a
+        pattern string.
+        """
+        if callable(callback):
+            setattr(self, default_attr, callback)
+            return callback
+        elif isinstance(callback, str):
+
+            def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+                add(callback, fn)
+                return fn
+
+            return decorator
+        else:
+            raise TypeError("str expected {} given".format(type(callback)))
+
     def add_inline(self, regexp: str, fn: RegexInlineHandler) -> None:
         """
         Manually register regexp based callback
@@ -348,18 +373,7 @@ class Bot:
         >>>         {"type": "text", "title": "test", "id": "0"}
         >>>     ])
         """
-        if callable(callback):
-            self._default_inline = callback
-            return callback
-        elif isinstance(callback, str):
-
-            def decorator(fn: RegexInlineHandler) -> RegexInlineHandler:
-                self.add_inline(callback, fn)
-                return fn
-
-            return decorator
-        else:
-            raise TypeError("str expected {} given".format(type(callback)))
+        return self._register("_default_inline", self.add_inline, callback)
 
     def add_chosen_inline_result_callback(
         self, regexp: str, fn: RegexChosenInlineResultHandler
@@ -395,20 +409,11 @@ class Bot:
         >>> def inc_metric(cir, match):
         >>>     metrics[cir.result_id].inc()
         """
-        if callable(callback):
-            self._default_chosen_inline_result_callback = callback
-            return callback
-        elif isinstance(callback, str):
-
-            def decorator(
-                fn: RegexChosenInlineResultHandler,
-            ) -> RegexChosenInlineResultHandler:
-                self.add_chosen_inline_result_callback(callback, fn)
-                return fn
-
-            return decorator
-        else:
-            raise TypeError("str expected {} given".format(type(callback)))
+        return self._register(
+            "_default_chosen_inline_result_callback",
+            self.add_chosen_inline_result_callback,
+            callback,
+        )
 
     def add_callback(self, regexp: str, fn: RegexCallbackHandler) -> None:
         """
@@ -438,18 +443,7 @@ class Bot:
         >>> def echo(chat, cq, match):
         >>>     return chat.reply(match.group(1))
         """
-        if callable(callback):
-            self._default_callback = callback
-            return callback
-        elif isinstance(callback, str):
-
-            def decorator(fn: RegexCallbackHandler) -> RegexCallbackHandler:
-                self.add_callback(callback, fn)
-                return fn
-
-            return decorator
-        else:
-            raise TypeError("str expected {} given".format(type(callback)))
+        return self._register("_default_callback", self.add_callback, callback)
 
     def add_checkout(self, regexp: str, fn: RegexCheckoutHandler) -> None:
         """
@@ -466,18 +460,7 @@ class Bot:
     def checkout(
         self, callback: DefaultCheckoutHandler | str
     ) -> DefaultCheckoutHandler | RegexCheckoutDecorator:
-        if callable(callback):
-            self._default_checkout: DefaultCheckoutHandler = callback
-            return callback
-        elif isinstance(callback, str):
-
-            def decorator(fn: RegexCheckoutHandler) -> RegexCheckoutHandler:
-                self.add_checkout(callback, fn)
-                return fn
-
-            return decorator
-        else:
-            raise TypeError("str expected {} given".format(type(callback)))
+        return self._register("_default_checkout", self.add_checkout, callback)
 
     def handle(self, msg_type: str) -> MessageHandlerDecorator:
         """
