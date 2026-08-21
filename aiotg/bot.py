@@ -260,9 +260,8 @@ class Bot:
             app.on_cleanup.append(lambda _: self.session.close())
             for cleanup_action in self._cleanups:
                 app.on_cleanup.append(
-                    lambda app_instance,
-                    action=cleanup_action: app_instance.loop.run_in_executor(
-                        None, action
+                    lambda app_instance, action=cleanup_action: (
+                        app_instance.loop.run_in_executor(None, action)
                     )
                 )
 
