@@ -1,14 +1,26 @@
 import asyncio
 from typing import Any, Callable, Never, override
-from watchdog.events import FileSystemEvent as Event, PatternMatchingEventHandler as EventHandler
+from watchdog.events import (
+    FileSystemEvent as Event,
+    PatternMatchingEventHandler as EventHandler,
+)
 
 class Handler(EventHandler):
     loop: asyncio.AbstractEventLoop
     changed: asyncio.Future[Event]
-    def __init__(self, loop: asyncio.AbstractEventLoop, *args: Any, **kwargs: Any) -> None: ...
+    def __init__(
+        self, loop: asyncio.AbstractEventLoop, *args: Any, **kwargs: Any
+    ) -> None: ...
     @override
     def on_any_event(self, event: Event): ...
 
 def clear_screen() -> None: ...
-def reload() -> Never: ...
-async def run_with_reloader(loop: asyncio.AbstractEventLoop, coroutine: asyncio.Task[Any], cleanup: Callable[[], Any] | None = None) -> None: ...
+def reload() -> Never:
+    """Reload process"""
+
+async def run_with_reloader(
+    loop: asyncio.AbstractEventLoop,
+    coroutine: asyncio.Task[Any],
+    cleanup: Callable[[], Any] | None = None,
+) -> None:
+    """Run coroutine with reloader"""

@@ -54,7 +54,7 @@ class TG_VideoNote(TG_FileBase, total=False):
     thumbnail: NotRequired[TG_PhotoSize]
 
 class TG_Sticker(TG_PhotoSize, total=False):
-    type: Literal['regular', 'mask', 'custom_emoji']
+    type: Literal["regular", "mask", "custom_emoji"]
     is_animated: bool
     is_video: bool
     thumbnail: TG_PhotoSize | None
@@ -63,6 +63,7 @@ class TG_Sticker(TG_PhotoSize, total=False):
     premium_animation: TG_File | None
     mask_position: TG_MaskPosition
     needs_repainting: bool
+
 TG_Voice = Any
 TG_PaidMedia = Any
 TG_Checklist = Any
@@ -194,7 +195,7 @@ class TG_ChatInviteLink(TypedDict, total=False):
 
 class TG_Chat(TypedDict, total=False):
     id: Required[int]
-    type: Required[Literal['private', 'group', 'supergroup', 'channel']]
+    type: Required[Literal["private", "group", "supergroup", "channel"]]
     title: str
     username: str
     first_name: str
@@ -273,35 +274,63 @@ class TG_ReplyParameters(TypedDict, total=False):
     allow_sending_without_reply: bool
     quote: str
     quote_parse_mode: str
-    quote_entities: list['TG_MessageEntity']
+    quote_entities: list["TG_MessageEntity"]
     quote_position: int
 
 class TG_MessageOriginUser(TypedDict, total=True):
-    type: Literal['user']
+    type: Literal["user"]
     date: int
     sender_user: TG_User
 
 class TG_MessageOriginHiddenUser(TypedDict, total=True):
-    type: Literal['hidden_user']
+    type: Literal["hidden_user"]
     date: int
     sender_user_name: str
 
 class TG_MessageOriginChat(TypedDict, total=True):
-    type: Literal['chat']
+    type: Literal["chat"]
     date: int
     sender_chat: TG_Chat
     author_signature: NotRequired[str]
 
 class TG_MessageOriginChannel(TypedDict, total=True):
-    type: Literal['channel']
+    type: Literal["channel"]
     date: int
     chat: TG_Chat
     message_id: int
     author_signature: NotRequired[str]
-TG_MessageOrigin = TG_MessageOriginUser | TG_MessageOriginHiddenUser | TG_MessageOriginChat | TG_MessageOriginChannel
+
+TG_MessageOrigin = (
+    TG_MessageOriginUser
+    | TG_MessageOriginHiddenUser
+    | TG_MessageOriginChat
+    | TG_MessageOriginChannel
+)
 
 class TG_MessageEntity(TypedDict, total=False):
-    type: Required[Literal['mention', 'hashtag', 'cashtag', 'bot_command', 'url', 'email', 'phone_number', 'bold', 'italic', 'underline', 'strikethrough', 'spoiler', 'blockquote', 'expandable_blockquote', 'code', 'pre', 'text_link', 'text_mention', 'custom_emoji']]
+    type: Required[
+        Literal[
+            "mention",
+            "hashtag",
+            "cashtag",
+            "bot_command",
+            "url",
+            "email",
+            "phone_number",
+            "bold",
+            "italic",
+            "underline",
+            "strikethrough",
+            "spoiler",
+            "blockquote",
+            "expandable_blockquote",
+            "code",
+            "pre",
+            "text_link",
+            "text_mention",
+            "custom_emoji",
+        ]
+    ]
     offset: Required[int]
     length: Required[int]
     url: str
@@ -339,22 +368,122 @@ class TG_ExternalReplyInfo(TypedDict, total=False):
     poll: TG_Poll
     venue: TG_Venue
 
-TG_Message = TypedDict('TG_Message', {'message_id': Required[int], 'message_thread_id': int, 'from': TG_User, 'sender_chat': TG_Chat, 'sender_boost_count': int, 'sender_business_bot': TG_User, 'date': Required[int], 'business_connection_id': str, 'chat': Required[TG_Chat], 'forward_origin': TG_MessageOrigin, 'forward_from': TG_User, 'is_topic_message': bool, 'is_automatic_forward': bool, 'reply_to_message': 'TG_Message', 'external_reply': TG_ExternalReplyInfo, 'quote': TG_TextQuote, 'reply_to_story': TG_Story, 'via_bot': TG_User, 'edit_date': int, 'has_protected_content': bool, 'is_from_offline': bool, 'media_group_id': str, 'author_signature': str, 'paid_star_count': int, 'text': str, 'entities': list[TG_MessageEntity], 'link_preview_options': TG_LinkPreviewOptions, 'effect_id': str, 'animation': TG_Animation, 'audio': TG_Audio, 'document': TG_Document, 'paid_media': TG_PaidMedia, 'photo': list[TG_PhotoSize], 'sticker': TG_Sticker, 'story': TG_Story, 'video': TG_Video, 'video_note': TG_VideoNote, 'voice': TG_Voice, 'caption': str, 'caption_entities': list[TG_MessageEntity], 'show_caption_above_media': bool, 'has_media_spoiler': bool, 'checklist': TG_Checklist, 'contact': TG_Contact, 'dice': TG_Dice, 'game': TG_Game, 'poll': TG_Poll, 'venue': TG_Venue, 'location': TG_Location, 'new_chat_members': list[TG_User], 'left_chat_member': TG_User, 'new_chat_title': str, 'new_chat_photo': list[TG_PhotoSize], 'delete_chat_photo': bool, 'group_chat_created': bool, 'supergroup_chat_created': bool, 'channel_chat_created': bool, 'message_auto_delete_timer_changed': TG_MessageAutoDeleteTimerChanged, 'migrate_to_chat_id': int, 'migrate_from_chat_id': int, 'pinned_message': 'TG_MaybeInaccessibleMessage', 'invoice': TG_Invoice, 'successful_payment': TG_SuccessfulPayment, 'refunded_payment': TG_RefundedPayment, 'users_shared': TG_UsersShared, 'chat_shared': TG_ChatShared, 'gift': TG_GiftInfo, 'unique_gift': TG_UniqueGiftInfo, 'connected_website': str, 'write_access_allowed': TG_WriteAccessAllowed, 'proximity_alert_triggered': TG_ProximityAlertTriggered, 'boost_added': TG_ChatBoostAdded, 'chat_background_set': TG_ChatBackground, 'checklist_tasks_done': TG_ChecklistTasksDone, 'checklist_tasks_added': TG_ChecklistTasksAdded, 'direct_message_price_changed': TG_DirectMessagePriceChanged, 'forum_topic_created': TG_ForumTopicCreated, 'forum_topic_edited': TG_ForumTopicEdited, 'forum_topic_closed': TG_ForumTopicClosed, 'forum_topic_reopened': TG_ForumTopicReopened, 'general_forum_topic_hidden': TG_GeneralForumTopicHidden, 'general_forum_topic_unhidden': TG_GeneralForumTopicUnhidden, 'giveaway_created': TG_GiveawayCreated, 'giveaway': TG_Giveaway, 'giveaway_winners': TG_GiveawayWinners, 'giveaway_completed': TG_GiveawayCompleted, 'paid_message_price_changed': TG_PaidMessagePriceChanged, 'video_chat_scheduled': TG_VideoChatScheduled, 'video_chat_started': TG_VideoChatStarted, 'video_chat_ended': TG_VideoChatEnded, 'video_chat_participants_invited': TG_VideoChatParticipantsInvited, 'web_app_data': TG_WebAppData, 'reply_markup': 'TG_InlineKeyboardMarkup', 'passport_data': TG_PassportData}, total=False)
+TG_Message = TypedDict(
+    "TG_Message",
+    {
+        "message_id": Required[int],
+        "message_thread_id": int,
+        "from": TG_User,
+        "sender_chat": TG_Chat,
+        "sender_boost_count": int,
+        "sender_business_bot": TG_User,
+        "date": Required[int],
+        "business_connection_id": str,
+        "chat": Required[TG_Chat],
+        "forward_origin": TG_MessageOrigin,
+        "forward_from": TG_User,
+        "is_topic_message": bool,
+        "is_automatic_forward": bool,
+        "reply_to_message": "TG_Message",
+        "external_reply": TG_ExternalReplyInfo,
+        "quote": TG_TextQuote,
+        "reply_to_story": TG_Story,
+        "via_bot": TG_User,
+        "edit_date": int,
+        "has_protected_content": bool,
+        "is_from_offline": bool,
+        "media_group_id": str,
+        "author_signature": str,
+        "paid_star_count": int,
+        "text": str,
+        "entities": list[TG_MessageEntity],
+        "link_preview_options": TG_LinkPreviewOptions,
+        "effect_id": str,
+        "animation": TG_Animation,
+        "audio": TG_Audio,
+        "document": TG_Document,
+        "paid_media": TG_PaidMedia,
+        "photo": list[TG_PhotoSize],
+        "sticker": TG_Sticker,
+        "story": TG_Story,
+        "video": TG_Video,
+        "video_note": TG_VideoNote,
+        "voice": TG_Voice,
+        "caption": str,
+        "caption_entities": list[TG_MessageEntity],
+        "show_caption_above_media": bool,
+        "has_media_spoiler": bool,
+        "checklist": TG_Checklist,
+        "contact": TG_Contact,
+        "dice": TG_Dice,
+        "game": TG_Game,
+        "poll": TG_Poll,
+        "venue": TG_Venue,
+        "location": TG_Location,
+        "new_chat_members": list[TG_User],
+        "left_chat_member": TG_User,
+        "new_chat_title": str,
+        "new_chat_photo": list[TG_PhotoSize],
+        "delete_chat_photo": bool,
+        "group_chat_created": bool,
+        "supergroup_chat_created": bool,
+        "channel_chat_created": bool,
+        "message_auto_delete_timer_changed": TG_MessageAutoDeleteTimerChanged,
+        "migrate_to_chat_id": int,
+        "migrate_from_chat_id": int,
+        "pinned_message": "TG_MaybeInaccessibleMessage",
+        "invoice": TG_Invoice,
+        "successful_payment": TG_SuccessfulPayment,
+        "refunded_payment": TG_RefundedPayment,
+        "users_shared": TG_UsersShared,
+        "chat_shared": TG_ChatShared,
+        "gift": TG_GiftInfo,
+        "unique_gift": TG_UniqueGiftInfo,
+        "connected_website": str,
+        "write_access_allowed": TG_WriteAccessAllowed,
+        "proximity_alert_triggered": TG_ProximityAlertTriggered,
+        "boost_added": TG_ChatBoostAdded,
+        "chat_background_set": TG_ChatBackground,
+        "checklist_tasks_done": TG_ChecklistTasksDone,
+        "checklist_tasks_added": TG_ChecklistTasksAdded,
+        "direct_message_price_changed": TG_DirectMessagePriceChanged,
+        "forum_topic_created": TG_ForumTopicCreated,
+        "forum_topic_edited": TG_ForumTopicEdited,
+        "forum_topic_closed": TG_ForumTopicClosed,
+        "forum_topic_reopened": TG_ForumTopicReopened,
+        "general_forum_topic_hidden": TG_GeneralForumTopicHidden,
+        "general_forum_topic_unhidden": TG_GeneralForumTopicUnhidden,
+        "giveaway_created": TG_GiveawayCreated,
+        "giveaway": TG_Giveaway,
+        "giveaway_winners": TG_GiveawayWinners,
+        "giveaway_completed": TG_GiveawayCompleted,
+        "paid_message_price_changed": TG_PaidMessagePriceChanged,
+        "video_chat_scheduled": TG_VideoChatScheduled,
+        "video_chat_started": TG_VideoChatStarted,
+        "video_chat_ended": TG_VideoChatEnded,
+        "video_chat_participants_invited": TG_VideoChatParticipantsInvited,
+        "web_app_data": TG_WebAppData,
+        "reply_markup": "TG_InlineKeyboardMarkup",
+        "passport_data": TG_PassportData,
+    },
+    total=False,
+)
 
 class TG_InaccessibleMessage(TypedDict, total=True):
     chat: TG_Chat
     message_id: int
     date: Literal[0]
+
 TG_MaybeInaccessibleMessage = TG_Message | TG_InaccessibleMessage
 
 class TG_ChatMemberOwner(TypedDict, total=True):
-    status: Literal['creator']
+    status: Literal["creator"]
     user: TG_User
     is_anonymous: bool
     custom_title: NotRequired[str]
 
 class TG_ChatMemberAdministrator(TypedDict, total=True):
-    status: Literal['administrator']
+    status: Literal["administrator"]
     user: TG_User
     can_be_edited: bool
     is_anonymous: bool
@@ -375,12 +504,12 @@ class TG_ChatMemberAdministrator(TypedDict, total=True):
     custom_title: NotRequired[str]
 
 class TG_ChatMemberMember(TypedDict, total=True):
-    status: Literal['member']
+    status: Literal["member"]
     user: TG_User
     until_date: NotRequired[int]
 
 class TG_ChatMemberRestricted(TypedDict, total=True):
-    status: Literal['restricted']
+    status: Literal["restricted"]
     user: TG_User
     is_member: bool
     can_send_messages: bool
@@ -393,14 +522,22 @@ class TG_ChatMemberRestricted(TypedDict, total=True):
     until_date: int
 
 class TG_ChatMemberLeft(TypedDict, total=True):
-    status: Literal['left']
+    status: Literal["left"]
     user: TG_User
 
 class TG_ChatMemberBanned(TypedDict, total=True):
-    status: Literal['kicked']
+    status: Literal["kicked"]
     user: TG_User
     until_date: int
-TG_ChatMember = TG_ChatMemberOwner | TG_ChatMemberAdministrator | TG_ChatMemberMember | TG_ChatMemberRestricted | TG_ChatMemberLeft | TG_ChatMemberBanned
+
+TG_ChatMember = (
+    TG_ChatMemberOwner
+    | TG_ChatMemberAdministrator
+    | TG_ChatMemberMember
+    | TG_ChatMemberRestricted
+    | TG_ChatMemberLeft
+    | TG_ChatMemberBanned
+)
 
 class TG_KeyboardButtonBase(TypedDict, total=False):
     text: Required[str]
@@ -443,9 +580,38 @@ class TG_ForceReply(TypedDict, total=False):
 
 class TG_InlineKeyboardMarkup(TypedDict, total=True):
     inline_keyboard: list[list[TG_InlineKeyboardButton]]
-TG_ReplyMarkupOpts = TG_InlineKeyboardMarkup | TG_ReplyKeyboardMarkup | TG_ReplyKeyboardRemove | TG_ForceReply
-TG_PreCheckoutQuerySrc = TypedDict('TG_PreCheckoutQuerySrc', {'id': str, 'from': TG_User, 'currency': str, 'total_amount': int, 'invoice_payload': str, 'shipping_option_id': NotRequired[str], 'order_info': NotRequired[TG_OrderInfo]})
-TG_CallbackQuerySrc = TypedDict('TG_CallbackQuerySrc', {'id': str, 'from': TG_User, 'message': NotRequired[TG_MaybeInaccessibleMessage], 'inline_message_id': NotRequired[str], 'chat_instance': str, 'data': NotRequired[str], 'game_short_name': NotRequired[str]}, total=True)
+
+TG_ReplyMarkupOpts = (
+    TG_InlineKeyboardMarkup
+    | TG_ReplyKeyboardMarkup
+    | TG_ReplyKeyboardRemove
+    | TG_ForceReply
+)
+TG_PreCheckoutQuerySrc = TypedDict(
+    "TG_PreCheckoutQuerySrc",
+    {
+        "id": str,
+        "from": TG_User,
+        "currency": str,
+        "total_amount": int,
+        "invoice_payload": str,
+        "shipping_option_id": NotRequired[str],
+        "order_info": NotRequired[TG_OrderInfo],
+    },
+)
+TG_CallbackQuerySrc = TypedDict(
+    "TG_CallbackQuerySrc",
+    {
+        "id": str,
+        "from": TG_User,
+        "message": NotRequired[TG_MaybeInaccessibleMessage],
+        "inline_message_id": NotRequired[str],
+        "chat_instance": str,
+        "data": NotRequired[str],
+        "game_short_name": NotRequired[str],
+    },
+    total=True,
+)
 
 class TG_CallbackQueryOpts(TypedDict, total=False):
     text: str
@@ -453,7 +619,19 @@ class TG_CallbackQueryOpts(TypedDict, total=False):
     url: str
     cache_time: int
 
-TG_InlineQuerySrc = TypedDict('TG_InlineQuerySrc', {'id': str, 'from': TG_User, 'query': str, 'offset': str, 'chat_type': NotRequired[Literal['sender', 'private', 'group', 'supergroup', 'channel']], 'location': NotRequired[TG_Location]})
+TG_InlineQuerySrc = TypedDict(
+    "TG_InlineQuerySrc",
+    {
+        "id": str,
+        "from": TG_User,
+        "query": str,
+        "offset": str,
+        "chat_type": NotRequired[
+            Literal["sender", "private", "group", "supergroup", "channel"]
+        ],
+        "location": NotRequired[TG_Location],
+    },
+)
 
 class TG_InlineQueryAnswerOpts(TypedDict, total=False):
     cache_time: int
@@ -506,6 +684,7 @@ class TG_GetChatOpts_API(TypedDict):
 class TG_DeleteMessageOpts_API(TG_GetChatOpts_API):
     chat_id: str | int
     message_id: int
+
 TG_SendFileInput = TG_InputFile | str
 
 class TG_SendMediaGroupOpts(TypedDict, total=False):
@@ -588,7 +767,7 @@ class TG_SendContactOpts(TG_SendOpts, total=False):
     vcard: str
 
 class TG_SendMessageOpts(TG_SendOpts, total=False):
-    parse_mode: Literal['HTML', 'Markdown']
+    parse_mode: Literal["HTML", "Markdown"]
     entities: list[TG_MessageEntity]
     link_preview_options: TG_LinkPreviewOptions
     disable_web_page_preview: bool
@@ -596,7 +775,7 @@ class TG_SendMessageOpts(TG_SendOpts, total=False):
 class TG_SendMessageOpts_API(TG_SendOpts, total=False):
     text: Required[str]
     chat_id: Required[int]
-    parse_mode: Literal['HTML', 'Markdown']
+    parse_mode: Literal["HTML", "Markdown"]
 
 class TG_ForwardMessageOpts(TypedDict, total=False):
     chat_id: Required[str | int]
@@ -699,7 +878,17 @@ class TG_CreateChatInviteLinkResponse(TypedDict, total=True):
     ok: bool
     result: TG_ChatInviteLink
 
-TG_ChosenInlineResultSrc = TypedDict('TG_ChosenInlineResultSrc', {'result_id': Required[str], 'from': Required[TG_User], 'location': TG_Location, 'inline_message_id': str, 'query': Required[str]}, total=False)
+TG_ChosenInlineResultSrc = TypedDict(
+    "TG_ChosenInlineResultSrc",
+    {
+        "result_id": Required[str],
+        "from": Required[TG_User],
+        "location": TG_Location,
+        "inline_message_id": str,
+        "query": Required[str],
+    },
+    total=False,
+)
 
 class TG_UpdateOpts(TypedDict, total=False):
     offset: int
@@ -741,6 +930,7 @@ class TG_UpdateResponse_Success(TypedDict):
 class TG_Response_Failure(TypedDict):
     ok: Literal[False]
     description: NotRequired[str]
+
 TG_UpdateResponse = TG_UpdateResponse_Success | TG_Response_Failure
 
 class TG_SendMediaGroupResponse(TypedDict):
