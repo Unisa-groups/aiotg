@@ -90,7 +90,6 @@ MESSAGE_TYPES = [
     "game",
     "delete_chat_photo",
     "new_chat_photo",
-    "delete_chat_photo",
     "new_chat_members",
     "new_chat_member",
     "left_chat_member",
