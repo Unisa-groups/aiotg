@@ -725,7 +725,7 @@ class Bot:
             )
         return self._session
 
-    def _process_message(self, message: TG_Message):
+    def _process_message(self, message, update_id=None):
         chat = Chat.from_message(self, message)
 
         for mt, func in self._handlers.items():
@@ -801,7 +801,7 @@ class Bot:
         # Determine update type starting with message updates
         for ut in MESSAGE_UPDATES:
             if ut in update:
-                coro = self._process_message(update[ut])
+                coro = self._process_message(update[ut], update_id=update["update_id"])
                 break
         else:
             if "inline_query" in update:
