@@ -44,7 +44,6 @@ __license__ = "MIT"
 CommandHandler = Callable[["Chat", re.Match[str]], Any]
 CommandDecorator = Callable[[CommandHandler], CommandHandler]
 DefaultHandler = Callable[["Chat", "TG_Message"], Any]
-UnhandledUpdateHandler = Callable[["TG_Update"], Any]
 
 # Inline handlers
 DefaultInlineHandler = Callable[["InlineQuery"], Any]
@@ -170,9 +169,6 @@ class Bot:
         self._default_inline: DefaultInlineHandler = lambda iq: None
         self._default_chosen_inline_result_callback: DefaultChosenInlineResultHandler = (
             lambda res: None
-        )
-        self._unhandled_update: UnhandledUpdateHandler = lambda update: logger.error(
-            "don't know how to handle update: %s", update
         )
 
     async def loop(self) -> None:
@@ -318,21 +314,6 @@ class Bot:
         >>>     return chat.reply(message["text"])
         """
         self._default = callback
-        return callback
-
-    def unhandled_update(
-        self, callback: UnhandledUpdateHandler
-    ) -> UnhandledUpdateHandler:
-        """
-        Set callback for updates that don't match any known update type
-
-        :Example:
-
-        >>> @bot.unhandled_update
-        >>> def log_unhandled(update):
-        >>>     logger.warning("unhandled: %s", update)
-        """
-        self._unhandled_update = callback
         return callback
 
     def _register(
@@ -834,7 +815,7 @@ class Bot:
                     update["chosen_inline_result"]
                 )
             else:
-                coro = self._unhandled_update(update)
+                logger.error("don't know how to handle update: %s", update)
 
         if coro:
             asyncio.ensure_future(coro)
