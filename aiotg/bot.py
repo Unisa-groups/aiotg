@@ -104,7 +104,6 @@ MESSAGE_UPDATES = [
     "edited_message",
     "channel_post",
     "edited_channel_post",
-    "callback_query",
     "chat_member",
     "my_chat_member",
     "chat_join_request",
