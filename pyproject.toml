@@ -19,7 +19,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development",
     "Topic :: Software Development :: Libraries",
 ]
@@ -27,7 +27,7 @@ dependencies = [
     "aiohttp>=3.8.0",
     "watchdog>=0.9.0",
 ]
-requires-python = ">= 3.11"
+requires-python = ">= 3.12"
 
 [project.urls]
 Homepage = "http://szastupov.github.io/aiotg"
