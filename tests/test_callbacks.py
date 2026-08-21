@@ -192,6 +192,21 @@ def test_updates_failed() -> None:
         log.check(("aiotg", "ERROR", "getUpdates error: Opps"))
 
 
+def test_unhandled_update() -> None:
+    update: TG_Update = cast(
+        TG_Update, cast(object, {"update_id": 0, "poll": {"id": "1234"}})
+    )
+    called_with: TG_Update | None = None
+
+    @bot.unhandled_update
+    def _(upd: TG_Update) -> None:
+        nonlocal called_with
+        called_with = upd
+
+    bot._process_update(update)
+    assert called_with == update
+
+
 @pytest.mark.parametrize("mt", MESSAGE_TYPES)
 def test_handle(mt: str):
     T = NewType("T", float)
