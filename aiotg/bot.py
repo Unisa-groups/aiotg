@@ -838,12 +838,6 @@ class Bot:
             asyncio.ensure_future(coro)
 
 
-class TgBot(Bot):
-    def __init__(self, *args: Any, **kwargs: Any):
-        logger.warning("TgBot is deprecated, use Bot instead")
-        super().__init__(*args, **kwargs)
-
-
 class InlineQuery:
     """
     Incoming inline query
@@ -867,12 +861,6 @@ class InlineQuery:
             results=self.bot.json_serialize(results),
             **options,
         )
-
-
-class TgInlineQuery(InlineQuery):
-    def __init__(self, *args: Any, **kwargs: Any):
-        logger.warning("TgInlineQuery is deprecated, use InlineQuery instead")
-        super().__init__(*args, **kwargs)
 
 
 class ChosenInlineResult:

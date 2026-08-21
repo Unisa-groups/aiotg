@@ -496,12 +496,6 @@ class Chat:
         return Chat(bot, chat["id"], chat["type"], message)
 
 
-class TgChat(Chat):
-    def __init__(self, *args: Any, **kwargs: Any):
-        logger.warning("TgChat is depricated, use Chat instead")
-        super().__init__(*args, **kwargs)
-
-
 class Sender(dict[str, Any]):
     """A small wrapper for sender info, mostly used for logging"""
 
@@ -509,9 +503,3 @@ class Sender(dict[str, Any]):
     def __repr__(self) -> str:
         uname = " (%s)" % self["username"] if "username" in self else ""
         return self["first_name"] + uname
-
-
-class TgSender(Sender):
-    def __init__(self, *args: Any, **kwargs: Any):
-        logger.warning("TgSender is depricated, use Sender instead")
-        super().__init__(*args, **kwargs)
