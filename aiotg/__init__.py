@@ -1,3 +1,3 @@
 from aiotg.bot import *  # noqa
 
-__version__ = "2.2.4"
+__version__ = "2.2.5"
