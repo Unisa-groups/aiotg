@@ -88,6 +88,7 @@ MESSAGE_TYPES = [
     "venue",
     "video",
     "game",
+    "story",
     "delete_chat_photo",
     "new_chat_photo",
     "new_chat_members",
