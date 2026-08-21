@@ -670,10 +670,6 @@ class Bot:
         """
         return self.api_call("getUserProfilePhotos", user_id=str(user_id), **options)
 
-    def track(self, message: TG_Message, name: str = "Message") -> None:
-        # TODO allow configuring custom tracking
-        pass
-
     def stop(self) -> None:
         self._running = False
 
@@ -751,7 +747,6 @@ class Bot:
 
         for mt, func in self._handlers.items():
             if mt in message:
-                self.track(message, mt)
                 return func(chat, message[mt])
 
         if "text" not in message:
@@ -760,13 +755,11 @@ class Bot:
         for patterns, handler in self._commands:
             m = re.search(patterns, message["text"], re.I)
             if m:
-                self.track(message, handler.__name__)
                 return handler(chat, m)
 
         # No match, run default if it's a 1to1 chat
         # However, if default_in_groups option is active, run default in any chat (not only 1to1)
         if not chat.is_group() or self.default_in_groups:
-            self.track(message, "default")
             return self._default(chat, message)
 
     def _process_inline_query(self, query: TG_InlineQuerySrc) -> Any:
