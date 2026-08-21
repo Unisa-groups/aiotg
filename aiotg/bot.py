@@ -537,7 +537,6 @@ class Bot:
         url = "{0}/bot{1}/{2}".format(API_URL, self.api_token, method)
         logger.debug("api_call %s, %s", method, params)
 
-        # response = await self.session.post(url, data=params)
         response = await self.session.post(url, json=params)
 
         if response.status == 200:

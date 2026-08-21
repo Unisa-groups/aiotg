@@ -65,9 +65,6 @@ class Chat:
         :param str parse_mode: Text parsing mode (``"Markdown"``, ``"HTML"`` or
             ``None``)
         """
-        # if markup is None:
-        #     markup = {}
-
         assert self.message
 
         opts: TG_SendMessageOpts = {
