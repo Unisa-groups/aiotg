@@ -71,6 +71,9 @@ RegexCheckoutDecorator = Callable[[RegexCheckoutHandler], RegexCheckoutHandler]
 MessageHandler = Callable[["Chat", Any], Any]
 MessageHandlerDecorator = Callable[[MessageHandler], MessageHandler]
 
+# Not handled update handlers
+DefaultNotHandledUpdateHandler = Callable[["TG_Update"], Any]
+
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
 RETRY_TIMEOUT = 30
@@ -169,6 +172,9 @@ class Bot:
         self._default_inline: DefaultInlineHandler = lambda iq: None
         self._default_chosen_inline_result_callback: DefaultChosenInlineResultHandler = (
             lambda res: None
+        )
+        self._default_not_handled_update: DefaultNotHandledUpdateHandler = (
+            lambda update: None
         )
 
     async def loop(self) -> None:
@@ -313,6 +319,21 @@ class Bot:
         >>>     return chat.reply(message["text"])
         """
         self._default = callback
+        return callback
+
+    def not_handled_update(
+        self, callback: DefaultNotHandledUpdateHandler
+    ) -> DefaultNotHandledUpdateHandler:
+        """
+        Set callback for updates that don't match any known update type
+
+        :Example:
+
+        >>> @bot.not_handled_update
+        >>> def log_unknown(update):
+        >>>     logger.warning("unhandled update: %s", update)
+        """
+        self._default_not_handled_update = callback
         return callback
 
     def _register(
@@ -781,6 +802,9 @@ class Bot:
                 return handler(pcq, match)
         return self._default_checkout(pcq)
 
+    def _process_not_handled_update(self, update: TG_Update) -> Any:
+        return self._default_not_handled_update(update)
+
     def _process_updates(self, updates: TG_UpdateResponse) -> None:
         if not updates["ok"]:
             logger.error("getUpdates error: %s", updates.get("description"))
@@ -814,6 +838,7 @@ class Bot:
                     update["chosen_inline_result"]
                 )
             else:
+                coro = self._process_not_handled_update(update)
                 logger.error("don't know how to handle update: %s", update)
 
         if coro:

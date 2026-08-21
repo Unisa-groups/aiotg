@@ -192,6 +192,24 @@ def test_updates_failed() -> None:
         log.check(("aiotg", "ERROR", "getUpdates error: Opps"))
 
 
+def test_not_handled_update() -> None:
+    called_with: TG_Update | None = None
+
+    @bot.not_handled_update
+    def _(update: TG_Update) -> None:
+        nonlocal called_with
+        called_with = update
+
+    update = cast(TG_Update, cast(object, {"update_id": 0, "poll": {}}))
+    with LogCapture() as log:
+        bot._process_update(update)
+        log.check(
+            ("aiotg", "DEBUG", "update %s" % (update,)),
+            ("aiotg", "ERROR", "don't know how to handle update: %s" % (update,)),
+        )
+    assert called_with == update
+
+
 @pytest.mark.parametrize("mt", MESSAGE_TYPES)
 def test_handle(mt: str):
     T = NewType("T", float)
