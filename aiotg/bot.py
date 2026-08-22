@@ -108,9 +108,9 @@ MESSAGE_UPDATES = [
     "edited_message",
     "channel_post",
     "edited_channel_post",
-    "chat_member",
-    "my_chat_member",
-    "chat_join_request",
+    "business_message",
+    "edited_business_message",
+    "guest_message",
 ]
 
 logger = logging.getLogger("aiotg")
@@ -814,6 +814,7 @@ class Bot:
             self._process_update(update)
 
     def _process_update(self, update: TG_Update) -> None:
+        'At most one of the optional fields can be present in any given update.'
         logger.debug("update %s", update)
 
         # Update offset
