@@ -540,7 +540,12 @@ class Bot:
         url = "{0}/bot{1}/{2}".format(API_URL, self.api_token, method)
         logger.debug("api_call %s, %s", method, params)
 
-        response = await self.session.post(url, json=params)
+        payload = {
+            k: self.json_serialize(v) if isinstance(v, (dict, list)) else v
+            for k, v in params.items()
+        }
+
+        response = await self.session.post(url, data=payload)
 
         if response.status == 200:
             return await response.json(loads=self.json_deserialize)
