@@ -925,17 +925,12 @@ class TG_LeaveChatOpts(TypedDict, total=True):
     chat_id: str | int
 
 
-class TG_RestrictChatMemberOpts(TypedDict, total=True):
-    chat_id: str | int
-    user_id: int
-    permissions: TG_ChatPermissions
-    use_independent_chat_permissions: NotRequired[bool]
-    until_date: NotRequired[int]
+class TG_RestrictChatMemberOpts(TypedDict, total=False):
+    use_independent_chat_permissions: bool
+    until_date: int
 
 
 class TG_PromoteChatMemberOpts(TG_AdminPermissions, total=False):
-    chat_id: Required[str | int]
-    user_id: Required[int]
     is_anonymous: bool
 
 
@@ -947,10 +942,8 @@ class TG_CreateChatInviteLinkOpts(TypedDict, total=False):
     creates_join_request: NotRequired[bool]
 
 
-class TG_SetChatPermissionsOpts(TypedDict, total=True):
-    chat_id: str | int
-    permissions: TG_ChatPermissions
-    use_independent_chat_permissions: NotRequired[bool]
+class TG_SetChatPermissionsOpts(TypedDict, total=False):
+    use_independent_chat_permissions: bool
 
 
 class TG_GetFileResponse(TypedDict, total=True):

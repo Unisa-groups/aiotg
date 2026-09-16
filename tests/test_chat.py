@@ -61,3 +61,38 @@ def test_get_chat_member_count_and_deprecated_alias() -> None:
 
     chat.get_chat_members_count()
     assert bot.calls["getChatMemberCount"]
+
+
+def test_restrict_and_promote_chat_member() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.restrict_chat_member(7, {"can_send_messages": False})
+    assert bot.calls["restrictChatMember"]["permissions"] == {
+        "can_send_messages": False
+    }
+
+    chat.promote_chat_member(7, can_delete_messages=True)
+    assert bot.calls["promoteChatMember"]["can_delete_messages"] is True
+
+
+def test_chat_administrator_custom_title_and_sender_chat_bans() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.set_chat_administrator_custom_title(7, "Mod")
+    assert bot.calls["setChatAdministratorCustomTitle"]["custom_title"] == "Mod"
+
+    chat.ban_chat_sender_chat(99)
+    assert bot.calls["banChatSenderChat"]["sender_chat_id"] == 99
+
+    chat.unban_chat_sender_chat(99)
+    assert bot.calls["unbanChatSenderChat"]["sender_chat_id"] == 99
+
+
+def test_set_chat_permissions() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.set_chat_permissions({"can_send_messages": True})
+    assert bot.calls["setChatPermissions"]["permissions"] == {"can_send_messages": True}

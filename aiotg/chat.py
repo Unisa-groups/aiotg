@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Literal, Unpack, override
 from .types_ import (
     TG_BanChatMemberOpts,
     TG_BoolResponse,
+    TG_ChatPermissions,
     TG_EditMessageTextOpts,
     TG_GetChatAdministratorResponse,
     TG_GetChatMemberCountResponse,
@@ -13,7 +14,9 @@ from .types_ import (
     TG_InlineKeyboardMarkup,
     TG_MaybeInaccessibleMessage,
     TG_MessageResponse,
+    TG_PromoteChatMemberOpts,
     TG_ReplyMarkupOpts,
+    TG_RestrictChatMemberOpts,
     TG_SendAudioOpts,
     TG_SendContactOpts,
     TG_SendDocumentOpts,
@@ -27,6 +30,7 @@ from .types_ import (
     TG_SendVenueOpts,
     TG_SendVideoOpts,
     TG_SendVoiceOpts,
+    TG_SetChatPermissionsOpts,
 )
 
 if TYPE_CHECKING:
@@ -459,6 +463,97 @@ class Chat:
         Deprecated: use ban_chat_member instead.
         """
         return self.ban_chat_member(user_id, **options)
+
+    def restrict_chat_member(
+        self,
+        user_id: int,
+        permissions: TG_ChatPermissions,
+        **options: Unpack[TG_RestrictChatMemberOpts],
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Restrict a user in a supergroup.
+        The bot must be an administrator in the supergroup for this to work.
+
+        :param int user_id: Unique identifier of the target user
+        :param dict permissions: New user permissions
+        :param options: Additional restrictChatMember options (see
+            https://core.telegram.org/bots/api#restrictchatmember)
+        """
+        return self.bot.api_call(
+            "restrictChatMember",
+            chat_id=self.id,
+            user_id=user_id,
+            permissions=permissions,
+            **options,
+        )
+
+    def promote_chat_member(
+        self, user_id: int, **options: Unpack[TG_PromoteChatMemberOpts]
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Promote or demote a user in a supergroup or channel.
+        The bot must be an administrator in the chat for this to work.
+
+        :param int user_id: Unique identifier of the target user
+        :param options: Which admin rights to grant (see
+            https://core.telegram.org/bots/api#promotechatmember)
+        """
+        return self.bot.api_call(
+            "promoteChatMember", chat_id=self.id, user_id=user_id, **options
+        )
+
+    def set_chat_administrator_custom_title(
+        self, user_id: int, custom_title: str
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Set a custom title for an administrator in a supergroup.
+
+        :param int user_id: Unique identifier of the target user
+        :param str custom_title: New custom title for the administrator
+        """
+        return self.bot.api_call(
+            "setChatAdministratorCustomTitle",
+            chat_id=self.id,
+            user_id=user_id,
+            custom_title=custom_title,
+        )
+
+    def ban_chat_sender_chat(self, sender_chat_id: int) -> Awaitable[TG_BoolResponse]:
+        """
+        Ban a channel chat in a supergroup or channel.
+
+        :param int sender_chat_id: Unique identifier of the target sender chat
+        """
+        return self.bot.api_call(
+            "banChatSenderChat", chat_id=self.id, sender_chat_id=sender_chat_id
+        )
+
+    def unban_chat_sender_chat(self, sender_chat_id: int) -> Awaitable[TG_BoolResponse]:
+        """
+        Unban a previously banned channel chat in a supergroup or channel.
+
+        :param int sender_chat_id: Unique identifier of the target sender chat
+        """
+        return self.bot.api_call(
+            "unbanChatSenderChat", chat_id=self.id, sender_chat_id=sender_chat_id
+        )
+
+    def set_chat_permissions(
+        self,
+        permissions: TG_ChatPermissions,
+        **options: Unpack[TG_SetChatPermissionsOpts],
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Set default chat permissions for all members.
+        The bot must be an administrator and have can_restrict_members rights.
+
+        :param dict permissions: New default chat permissions
+        :param options: Additional setChatPermissions options (see
+            https://core.telegram.org/bots/api#setchatpermissions)
+        """
+        return self.bot.api_call(
+            "setChatPermissions", chat_id=self.id, permissions=permissions, **options
+        )
 
     def unban_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
         """
