@@ -28,3 +28,6 @@ Icon
 .vscode
 # ignore PyCharm
 .idea
+
+# git worktrees for isolated task execution
+.worktrees
