@@ -3,6 +3,7 @@ from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any, Literal, Unpack, override
 
 from .types_ import (
+    TG_BanChatMemberOpts,
     TG_BoolResponse,
     TG_EditMessageTextOpts,
     TG_GetChatAdministratorResponse,
@@ -128,11 +129,17 @@ class Chat:
         """
         return self.bot.api_call("getChatAdministrators", chat_id=str(self.id))
 
-    def get_chat_members_count(self) -> Awaitable[TG_GetChatMemberCountResponse]:
+    def get_chat_member_count(self) -> Awaitable[TG_GetChatMemberCountResponse]:
         """
         Get the number of members in a chat.
         """
-        return self.bot.api_call("getChatMembersCount", chat_id=str(self.id))
+        return self.bot.api_call("getChatMemberCount", chat_id=str(self.id))
+
+    def get_chat_members_count(self) -> Awaitable[TG_GetChatMemberCountResponse]:
+        """
+        Deprecated: use get_chat_member_count instead.
+        """
+        return self.get_chat_member_count()
 
     def get_chat_member(self, user_id: int) -> Awaitable[TG_GetChatMemberResponse]:
         """
@@ -430,14 +437,28 @@ class Chat:
             message_id=message_id,
         )
 
-    def kick_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
+    def ban_chat_member(
+        self, user_id: int, **options: Unpack[TG_BanChatMemberOpts]
+    ) -> Awaitable[TG_BoolResponse]:
         """
-        Use this method to kick a user from a group or a supergroup.
-        The bot must be an administrator in the group for this to work.
+        Ban a user from a group, supergroup or channel.
+        The bot must be an administrator in the chat for this to work.
 
         :param int user_id: Unique identifier of the target user
+        :param options: Additional banChatMember options (see
+            https://core.telegram.org/bots/api#banchatmember)
         """
-        return self.bot.api_call("kickChatMember", chat_id=self.id, user_id=user_id)
+        return self.bot.api_call(
+            "banChatMember", chat_id=self.id, user_id=user_id, **options
+        )
+
+    def kick_chat_member(
+        self, user_id: int, **options: Unpack[TG_BanChatMemberOpts]
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Deprecated: use ban_chat_member instead.
+        """
+        return self.ban_chat_member(user_id, **options)
 
     def unban_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
         """

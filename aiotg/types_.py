@@ -907,8 +907,6 @@ class TG_CreateForumTopicOpts(TypedDict, total=False):
 
 
 class TG_BanChatMemberOpts(TypedDict, total=False):
-    chat_id: Required[str | int]
-    user_id: Required[int]
     until_date: int
     revoke_messages: bool
 
