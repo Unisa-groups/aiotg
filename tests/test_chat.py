@@ -96,3 +96,34 @@ def test_set_chat_permissions() -> None:
 
     chat.set_chat_permissions({"can_send_messages": True})
     assert bot.calls["setChatPermissions"]["permissions"] == {"can_send_messages": True}
+
+
+def test_chat_invite_links() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.export_chat_invite_link()
+    assert "exportChatInviteLink" in bot.calls
+
+    chat.create_chat_invite_link(name="Marketing")
+    assert bot.calls["createChatInviteLink"]["name"] == "Marketing"
+
+    chat.edit_chat_invite_link("https://t.me/joinchat/abc", member_limit=10)
+    assert bot.calls["editChatInviteLink"]["invite_link"] == "https://t.me/joinchat/abc"
+    assert bot.calls["editChatInviteLink"]["member_limit"] == 10
+
+    chat.revoke_chat_invite_link("https://t.me/joinchat/abc")
+    assert (
+        bot.calls["revokeChatInviteLink"]["invite_link"] == "https://t.me/joinchat/abc"
+    )
+
+
+def test_chat_join_requests() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.approve_chat_join_request(7)
+    assert bot.calls["approveChatJoinRequest"]["user_id"] == 7
+
+    chat.decline_chat_join_request(7)
+    assert bot.calls["declineChatJoinRequest"]["user_id"] == 7

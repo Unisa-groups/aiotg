@@ -6,6 +6,8 @@ from .types_ import (
     TG_BanChatMemberOpts,
     TG_BoolResponse,
     TG_ChatPermissions,
+    TG_CreateChatInviteLinkOpts,
+    TG_CreateChatInviteLinkResponse,
     TG_EditMessageTextOpts,
     TG_GetChatAdministratorResponse,
     TG_GetChatMemberCountResponse,
@@ -31,6 +33,7 @@ from .types_ import (
     TG_SendVideoOpts,
     TG_SendVoiceOpts,
     TG_SetChatPermissionsOpts,
+    TG_StringResponse,
 )
 
 if TYPE_CHECKING:
@@ -553,6 +556,73 @@ class Chat:
         """
         return self.bot.api_call(
             "setChatPermissions", chat_id=self.id, permissions=permissions, **options
+        )
+
+    def export_chat_invite_link(self) -> Awaitable[TG_StringResponse]:
+        """
+        Generate a new primary invite link for the chat, revoking any previous one.
+        The bot must be an administrator with can_invite_users rights.
+        """
+        return self.bot.api_call("exportChatInviteLink", chat_id=self.id)
+
+    def create_chat_invite_link(
+        self, **options: Unpack[TG_CreateChatInviteLinkOpts]
+    ) -> Awaitable[TG_CreateChatInviteLinkResponse]:
+        """
+        Create an additional invite link for the chat.
+        The bot must be an administrator with can_invite_users rights.
+
+        :param options: Additional createChatInviteLink options (see
+            https://core.telegram.org/bots/api#createchatinvitelink)
+        """
+        return self.bot.api_call("createChatInviteLink", chat_id=self.id, **options)
+
+    def edit_chat_invite_link(
+        self, invite_link: str, **options: Unpack[TG_CreateChatInviteLinkOpts]
+    ) -> Awaitable[TG_CreateChatInviteLinkResponse]:
+        """
+        Edit a non-primary invite link created by the bot.
+
+        :param str invite_link: The invite link to edit
+        :param options: Additional editChatInviteLink options (see
+            https://core.telegram.org/bots/api#editchatinvitelink)
+        """
+        return self.bot.api_call(
+            "editChatInviteLink", chat_id=self.id, invite_link=invite_link, **options
+        )
+
+    def revoke_chat_invite_link(
+        self, invite_link: str
+    ) -> Awaitable[TG_CreateChatInviteLinkResponse]:
+        """
+        Revoke an invite link created by the bot.
+
+        :param str invite_link: The invite link to revoke
+        """
+        return self.bot.api_call(
+            "revokeChatInviteLink", chat_id=self.id, invite_link=invite_link
+        )
+
+    def approve_chat_join_request(self, user_id: int) -> Awaitable[TG_BoolResponse]:
+        """
+        Approve a chat join request.
+        The bot must have can_invite_users rights.
+
+        :param int user_id: Unique identifier of the target user
+        """
+        return self.bot.api_call(
+            "approveChatJoinRequest", chat_id=self.id, user_id=user_id
+        )
+
+    def decline_chat_join_request(self, user_id: int) -> Awaitable[TG_BoolResponse]:
+        """
+        Decline a chat join request.
+        The bot must have can_invite_users rights.
+
+        :param int user_id: Unique identifier of the target user
+        """
+        return self.bot.api_call(
+            "declineChatJoinRequest", chat_id=self.id, user_id=user_id
         )
 
     def unban_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:

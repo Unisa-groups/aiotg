@@ -935,11 +935,10 @@ class TG_PromoteChatMemberOpts(TG_AdminPermissions, total=False):
 
 
 class TG_CreateChatInviteLinkOpts(TypedDict, total=False):
-    chat_id: str | int
-    name: NotRequired[str]
-    expire_date: NotRequired[int]
-    member_limit: NotRequired[int]
-    creates_join_request: NotRequired[bool]
+    name: str
+    expire_date: int
+    member_limit: int
+    creates_join_request: bool
 
 
 class TG_SetChatPermissionsOpts(TypedDict, total=False):
