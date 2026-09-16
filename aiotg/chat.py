@@ -477,6 +477,10 @@ class Chat:
         self.message: TG_MaybeInaccessibleMessage | None = src_message
         if src_message and "from" in src_message:
             sender = src_message["from"]
+        elif src_message and "sender_chat" in src_message:
+            # channel posts, anonymous group admins and linked-channel
+            # auto-forwards carry no "from"; "sender_chat" holds the real id
+            sender = src_message["sender_chat"]
         else:
             sender = {"first_name": "N/A"}
         self.sender: "Sender" = Sender(sender)
@@ -501,5 +505,7 @@ class Sender(dict[str, Any]):
 
     @override
     def __repr__(self) -> str:
+        # "title" for a sender_chat, "first_name" for a user
+        name = self.get("first_name") or self.get("title") or "N/A"
         uname = " (%s)" % self["username"] if "username" in self else ""
-        return self["first_name"] + uname
+        return name + uname
