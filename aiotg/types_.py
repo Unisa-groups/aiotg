@@ -900,9 +900,12 @@ class TG_ForwardMessageOpts(TypedDict, total=False):
 
 
 class TG_CreateForumTopicOpts(TypedDict, total=False):
-    chat_id: Required[str | int]
-    name: Required[str]
     icon_color: int
+    icon_custom_emoji_id: str
+
+
+class TG_EditForumTopicOpts(TypedDict, total=False):
+    name: str
     icon_custom_emoji_id: str
 
 

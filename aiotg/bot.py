@@ -170,9 +170,9 @@ class Bot:
         self._default: DefaultHandler = lambda chat, message: None
         self._default_callback: DefaultCallbackHandler = lambda chat, cq: None
         self._default_inline: DefaultInlineHandler = lambda iq: None
-        self._default_chosen_inline_result_callback: DefaultChosenInlineResultHandler = (
-            lambda res: None
-        )
+        self._default_chosen_inline_result_callback: (
+            DefaultChosenInlineResultHandler
+        ) = lambda res: None
         self._default_not_handled_update: DefaultNotHandledUpdateHandler = (
             lambda update: None
         )
@@ -678,6 +678,12 @@ class Bot:
         """
         return self.api_call("getUserProfilePhotos", user_id=str(user_id), **options)
 
+    def get_forum_topic_icon_stickers(self) -> Awaitable[Any]:
+        """
+        Get custom emoji stickers that can be used as forum topic icons.
+        """
+        return self.api_call("getForumTopicIconStickers")
+
     def stop(self) -> None:
         self._running = False
 
@@ -819,7 +825,7 @@ class Bot:
             self._process_update(update)
 
     def _process_update(self, update: TG_Update) -> None:
-        'At most one of the optional fields can be present in any given update.'
+        "At most one of the optional fields can be present in any given update."
         logger.debug("update %s", update)
 
         # Update offset

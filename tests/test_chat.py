@@ -158,3 +158,49 @@ def test_pin_and_unpin_chat_message() -> None:
 
     chat.unpin_all_chat_messages()
     assert "unpinAllChatMessages" in bot.calls
+
+
+def test_forum_topic_management() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.create_forum_topic("General", icon_color=0x6FB9F0)
+    assert bot.calls["createForumTopic"]["name"] == "General"
+
+    chat.edit_forum_topic(5, name="Renamed")
+    assert bot.calls["editForumTopic"]["message_thread_id"] == 5
+
+    chat.close_forum_topic(5)
+    assert bot.calls["closeForumTopic"]["message_thread_id"] == 5
+
+    chat.reopen_forum_topic(5)
+    assert bot.calls["reopenForumTopic"]["message_thread_id"] == 5
+
+    chat.delete_forum_topic(5)
+    assert bot.calls["deleteForumTopic"]["message_thread_id"] == 5
+
+    chat.unpin_all_forum_topic_messages(5)
+    assert bot.calls["unpinAllForumTopicMessages"]["message_thread_id"] == 5
+
+
+def test_general_forum_topic_management() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.edit_general_forum_topic("Renamed General")
+    assert bot.calls["editGeneralForumTopic"]["name"] == "Renamed General"
+
+    chat.close_general_forum_topic()
+    assert "closeGeneralForumTopic" in bot.calls
+
+    chat.reopen_general_forum_topic()
+    assert "reopenGeneralForumTopic" in bot.calls
+
+    chat.hide_general_forum_topic()
+    assert "hideGeneralForumTopic" in bot.calls
+
+    chat.unhide_general_forum_topic()
+    assert "unhideGeneralForumTopic" in bot.calls
+
+    chat.unpin_all_general_forum_topic_messages()
+    assert "unpinAllGeneralForumTopicMessages" in bot.calls

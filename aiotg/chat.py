@@ -8,6 +8,9 @@ from .types_ import (
     TG_ChatPermissions,
     TG_CreateChatInviteLinkOpts,
     TG_CreateChatInviteLinkResponse,
+    TG_CreateForumTopicOpts,
+    TG_CreateForumTopicResponse,
+    TG_EditForumTopicOpts,
     TG_EditMessageTextOpts,
     TG_GetChatAdministratorResponse,
     TG_GetChatMemberCountResponse,
@@ -696,6 +699,111 @@ class Chat:
         The bot must be an administrator with can_pin_messages rights.
         """
         return self.bot.api_call("unpinAllChatMessages", chat_id=self.id)
+
+    def create_forum_topic(
+        self, name: str, **options: Unpack[TG_CreateForumTopicOpts]
+    ) -> Awaitable[TG_CreateForumTopicResponse]:
+        """
+        Create a topic in a forum supergroup.
+        The bot must be an administrator with can_manage_topics rights.
+
+        :param str name: Topic name, 1-128 characters
+        :param options: Additional createForumTopic options (see
+            https://core.telegram.org/bots/api#createforumtopic)
+        """
+        return self.bot.api_call(
+            "createForumTopic", chat_id=self.id, name=name, **options
+        )
+
+    def edit_forum_topic(
+        self, message_thread_id: int, **options: Unpack[TG_EditForumTopicOpts]
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Edit the name and icon of a topic in a forum supergroup.
+
+        :param int message_thread_id: Unique identifier of the target topic
+        :param options: Additional editForumTopic options (see
+            https://core.telegram.org/bots/api#editforumtopic)
+        """
+        return self.bot.api_call(
+            "editForumTopic",
+            chat_id=self.id,
+            message_thread_id=message_thread_id,
+            **options,
+        )
+
+    def close_forum_topic(self, message_thread_id: int) -> Awaitable[TG_BoolResponse]:
+        """
+        Close an open topic in a forum supergroup.
+
+        :param int message_thread_id: Unique identifier of the target topic
+        """
+        return self.bot.api_call(
+            "closeForumTopic", chat_id=self.id, message_thread_id=message_thread_id
+        )
+
+    def reopen_forum_topic(self, message_thread_id: int) -> Awaitable[TG_BoolResponse]:
+        """
+        Reopen a closed topic in a forum supergroup.
+
+        :param int message_thread_id: Unique identifier of the target topic
+        """
+        return self.bot.api_call(
+            "reopenForumTopic", chat_id=self.id, message_thread_id=message_thread_id
+        )
+
+    def delete_forum_topic(self, message_thread_id: int) -> Awaitable[TG_BoolResponse]:
+        """
+        Delete a forum topic along with all its messages.
+        The bot must have can_delete_messages rights.
+
+        :param int message_thread_id: Unique identifier of the target topic
+        """
+        return self.bot.api_call(
+            "deleteForumTopic", chat_id=self.id, message_thread_id=message_thread_id
+        )
+
+    def unpin_all_forum_topic_messages(
+        self, message_thread_id: int
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Unpin all pinned messages in a forum topic.
+
+        :param int message_thread_id: Unique identifier of the target topic
+        """
+        return self.bot.api_call(
+            "unpinAllForumTopicMessages",
+            chat_id=self.id,
+            message_thread_id=message_thread_id,
+        )
+
+    def edit_general_forum_topic(self, name: str) -> Awaitable[TG_BoolResponse]:
+        """
+        Edit the name of the 'General' topic in a forum supergroup.
+
+        :param str name: New topic name, 1-128 characters
+        """
+        return self.bot.api_call("editGeneralForumTopic", chat_id=self.id, name=name)
+
+    def close_general_forum_topic(self) -> Awaitable[TG_BoolResponse]:
+        """Close the 'General' topic in a forum supergroup."""
+        return self.bot.api_call("closeGeneralForumTopic", chat_id=self.id)
+
+    def reopen_general_forum_topic(self) -> Awaitable[TG_BoolResponse]:
+        """Reopen the 'General' topic in a forum supergroup (also unhides it)."""
+        return self.bot.api_call("reopenGeneralForumTopic", chat_id=self.id)
+
+    def hide_general_forum_topic(self) -> Awaitable[TG_BoolResponse]:
+        """Hide the 'General' topic in a forum supergroup (also closes it)."""
+        return self.bot.api_call("hideGeneralForumTopic", chat_id=self.id)
+
+    def unhide_general_forum_topic(self) -> Awaitable[TG_BoolResponse]:
+        """Unhide the 'General' topic in a forum supergroup."""
+        return self.bot.api_call("unhideGeneralForumTopic", chat_id=self.id)
+
+    def unpin_all_general_forum_topic_messages(self) -> Awaitable[TG_BoolResponse]:
+        """Unpin all pinned messages in the 'General' topic."""
+        return self.bot.api_call("unpinAllGeneralForumTopicMessages", chat_id=self.id)
 
     def unban_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
         """
