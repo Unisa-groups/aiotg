@@ -1150,7 +1150,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ## Task 7: Stickers
 
 **Files:**
-- Modify: `aiotg/bot.py` (insert after Task 6's methods; also add `Literal` to the `from typing import (...)` line, which currently doesn't import it), `aiotg/types_.py` (new types, near `TG_MaskPosition`)
+- Modify: `aiotg/bot.py` (insert after Task 6's methods; also add `Literal` to the `from typing import (...)` line, which currently doesn't import it), `aiotg/types_.py` (new types, placed directly above `TG_SendMediaGroupOpts` — see Step 1 for why)
 - Test: `tests/test_bot.py`
 
 **Interfaces:**
@@ -2258,7 +2258,13 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 - Consumes: `TG_ReactionType` (from Task 10).
 - Produces: `Bot.poll`, `.poll_answer`, `.my_chat_member`, `.chat_member`, `.chat_join_request`, `.chat_boost`, `.removed_chat_boost`, `.message_reaction`, `.message_reaction_count` decorators; real `TG_ChatJoinRequest`, `TG_ChatBoostUpdated`, `TG_ChatBoostRemoved`, `TG_ChatMemberUpdated`, `TG_MessageReactionUpdated`, `TG_MessageReactionCountUpdated` types.
 
-- [ ] **Step 1: Replace 6 more `Any` stubs with real types, and write the failing test**
+- [ ] **Step 1: Replace 6 more `Any` stubs with real types, fix a test fixture this task invalidates, and write the failing test**
+
+`tests/test_callbacks.py::test_not_handled_update` currently uses `{"update_id": 0, "poll": {}}` as its example of a genuinely-unhandled update. Once this task adds the `poll` branch, that update becomes handled, and the existing test would start failing for the wrong reason. Change its fixture to a key nothing will ever handle:
+```python
+    update = cast(TG_Update, cast(object, {"update_id": 0, "some_future_update_type": {}}))
+```
+(replacing the existing `update = cast(TG_Update, cast(object, {"update_id": 0, "poll": {}}))` line — the two `log.check(...)` assertions and `assert called_with == update` stay as they are.)
 
 In `aiotg/types_.py`, the stub block has this run (locate via `TG_MessageReactionUpdated = Any`):
 ```python
@@ -2270,7 +2276,7 @@ TG_PaidMediaPurchaed = Any
 Replace the first two lines (leave `TG_ShippingQuery`/`TG_PaidMediaPurchaed` as `Any` — out of scope, Payments was cut) with:
 ```python
 class TG_ReactionCount(TypedDict, total=True):
-    type: TG_ReactionType
+    type: "TG_ReactionType"
     total_count: int
 
 
@@ -2282,8 +2288,8 @@ TG_MessageReactionUpdated = TypedDict(
         "user": NotRequired["TG_User"],
         "actor_chat": NotRequired["TG_Chat"],
         "date": Required[int],
-        "old_reaction": Required[list[TG_ReactionType]],
-        "new_reaction": Required[list[TG_ReactionType]],
+        "old_reaction": Required[list["TG_ReactionType"]],
+        "new_reaction": Required[list["TG_ReactionType"]],
     },
     total=True,
 )
@@ -2559,7 +2565,7 @@ to:
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `pytest tests/test_callbacks.py -v`
-Expected: PASS (including the existing `test_not_handled_update`, which uses an update key — `"poll": {}` — that is now handled by the new `poll` branch instead of falling through. Update that test's fixture to use a still-genuinely-unhandled key, e.g. `"some_future_update_type"`, so it keeps testing the fallback path it's meant to test.)
+Expected: PASS (including the updated `test_not_handled_update`)
 
 - [ ] **Step 5: Commit**
 
