@@ -16,6 +16,7 @@ from .types_ import (
     TG_InlineKeyboardMarkup,
     TG_MaybeInaccessibleMessage,
     TG_MessageResponse,
+    TG_PinChatMessageOpts,
     TG_PromoteChatMemberOpts,
     TG_ReplyMarkupOpts,
     TG_RestrictChatMemberOpts,
@@ -34,6 +35,7 @@ from .types_ import (
     TG_SendVoiceOpts,
     TG_SetChatPermissionsOpts,
     TG_StringResponse,
+    TG_UnpinChatMessageOpts,
 )
 
 if TYPE_CHECKING:
@@ -624,6 +626,76 @@ class Chat:
         return self.bot.api_call(
             "declineChatJoinRequest", chat_id=self.id, user_id=user_id
         )
+
+    def set_chat_photo(self, photo: TG_SendFileInput) -> Awaitable[TG_BoolResponse]:
+        """
+        Set a new profile photo for the chat.
+        The bot must be an administrator with can_change_info rights.
+
+        :param photo: New chat photo (file, not a file_id or URL)
+        """
+        return self.bot.api_call("setChatPhoto", chat_id=self.id, photo=photo)
+
+    def delete_chat_photo(self) -> Awaitable[TG_BoolResponse]:
+        """
+        Delete the chat's profile photo.
+        The bot must be an administrator with can_change_info rights.
+        """
+        return self.bot.api_call("deleteChatPhoto", chat_id=self.id)
+
+    def set_chat_title(self, title: str) -> Awaitable[TG_BoolResponse]:
+        """
+        Change the title of the chat.
+        The bot must be an administrator with can_change_info rights.
+
+        :param str title: New chat title, 1-128 characters
+        """
+        return self.bot.api_call("setChatTitle", chat_id=self.id, title=title)
+
+    def set_chat_description(self, description: str = "") -> Awaitable[TG_BoolResponse]:
+        """
+        Change the description of the chat.
+        The bot must be an administrator with can_change_info rights.
+
+        :param str description: New chat description, 0-255 characters
+        """
+        return self.bot.api_call(
+            "setChatDescription", chat_id=self.id, description=description
+        )
+
+    def pin_chat_message(
+        self, message_id: int, **options: Unpack[TG_PinChatMessageOpts]
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Pin a message in the chat.
+        The bot must be an administrator with can_pin_messages rights.
+
+        :param int message_id: Identifier of the message to pin
+        :param options: Additional pinChatMessage options (see
+            https://core.telegram.org/bots/api#pinchatmessage)
+        """
+        return self.bot.api_call(
+            "pinChatMessage", chat_id=self.id, message_id=message_id, **options
+        )
+
+    def unpin_chat_message(
+        self, **options: Unpack[TG_UnpinChatMessageOpts]
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Unpin a message in the chat. Unpins the most recent pinned message if
+        message_id isn't specified.
+
+        :param options: Additional unpinChatMessage options, including
+            message_id (see https://core.telegram.org/bots/api#unpinchatmessage)
+        """
+        return self.bot.api_call("unpinChatMessage", chat_id=self.id, **options)
+
+    def unpin_all_chat_messages(self) -> Awaitable[TG_BoolResponse]:
+        """
+        Unpin all pinned messages in the chat.
+        The bot must be an administrator with can_pin_messages rights.
+        """
+        return self.bot.api_call("unpinAllChatMessages", chat_id=self.id)
 
     def unban_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
         """

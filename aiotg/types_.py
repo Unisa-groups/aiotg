@@ -945,6 +945,16 @@ class TG_SetChatPermissionsOpts(TypedDict, total=False):
     use_independent_chat_permissions: bool
 
 
+class TG_PinChatMessageOpts(TypedDict, total=False):
+    business_connection_id: str
+    disable_notification: bool
+
+
+class TG_UnpinChatMessageOpts(TypedDict, total=False):
+    business_connection_id: str
+    message_id: int
+
+
 class TG_GetFileResponse(TypedDict, total=True):
     ok: bool
     result: TG_File

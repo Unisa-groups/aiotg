@@ -127,3 +127,34 @@ def test_chat_join_requests() -> None:
 
     chat.decline_chat_join_request(7)
     assert bot.calls["declineChatJoinRequest"]["user_id"] == 7
+
+
+def test_chat_photo_and_metadata() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.set_chat_photo(b"foo")
+    assert "setChatPhoto" in bot.calls
+
+    chat.delete_chat_photo()
+    assert "deleteChatPhoto" in bot.calls
+
+    chat.set_chat_title("New Title")
+    assert bot.calls["setChatTitle"]["title"] == "New Title"
+
+    chat.set_chat_description("New description")
+    assert bot.calls["setChatDescription"]["description"] == "New description"
+
+
+def test_pin_and_unpin_chat_message() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.pin_chat_message(1337)
+    assert bot.calls["pinChatMessage"]["message_id"] == 1337
+
+    chat.unpin_chat_message(message_id=1337)
+    assert bot.calls["unpinChatMessage"]["message_id"] == 1337
+
+    chat.unpin_all_chat_messages()
+    assert "unpinAllChatMessages" in bot.calls
