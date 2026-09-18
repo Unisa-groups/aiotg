@@ -6,12 +6,18 @@ from .types_ import (
     TG_BanChatMemberOpts,
     TG_BoolResponse,
     TG_ChatPermissions,
+    TG_CopyMessageOpts,
+    TG_CopyMessagesOpts,
     TG_CreateChatInviteLinkOpts,
     TG_CreateChatInviteLinkResponse,
     TG_CreateForumTopicOpts,
     TG_CreateForumTopicResponse,
     TG_EditForumTopicOpts,
+    TG_EditMessageCaptionOpts,
+    TG_EditMessageLiveLocationOpts,
+    TG_EditMessageMediaOpts,
     TG_EditMessageTextOpts,
+    TG_ForwardMessageOpts,
     TG_GetChatAdministratorResponse,
     TG_GetChatMemberCountResponse,
     TG_GetChatMemberResponse,
@@ -41,6 +47,7 @@ from .types_ import (
     TG_SendVideoOpts,
     TG_SendVoiceOpts,
     TG_SetChatPermissionsOpts,
+    TG_StopMessageLiveLocationOpts,
     TG_StringResponse,
     TG_UnpinChatMessageOpts,
 )
@@ -131,6 +138,170 @@ class Chat:
         """
         return self.bot.edit_message_reply_markup(
             self.id, message_id, reply_markup=self.bot.json_serialize(markup)
+        )
+
+    def edit_message_live_location(
+        self,
+        message_id: int,
+        latitude: float,
+        longitude: float,
+        **options: Unpack[TG_EditMessageLiveLocationOpts],
+    ) -> Awaitable[Any]:
+        """
+        Update the live location of a message sent by the bot.
+
+        :param int message_id: Identifier of the message to edit
+        :param float latitude: New latitude
+        :param float longitude: New longitude
+        :param options: Additional editMessageLiveLocation options (see
+            https://core.telegram.org/bots/api#editmessagelivelocation)
+        """
+        return self.bot.api_call(
+            "editMessageLiveLocation",
+            chat_id=self.id,
+            message_id=message_id,
+            latitude=latitude,
+            longitude=longitude,
+            **options,
+        )
+
+    def stop_message_live_location(
+        self, message_id: int, **options: Unpack[TG_StopMessageLiveLocationOpts]
+    ) -> Awaitable[Any]:
+        """
+        Stop updating a live location message before live_period expires.
+
+        :param int message_id: Identifier of the message to stop
+        :param options: Additional stopMessageLiveLocation options (see
+            https://core.telegram.org/bots/api#stopmessagelivelocation)
+        """
+        return self.bot.api_call(
+            "stopMessageLiveLocation", chat_id=self.id, message_id=message_id, **options
+        )
+
+    def edit_message_caption(
+        self,
+        message_id: int,
+        caption: str = "",
+        **options: Unpack[TG_EditMessageCaptionOpts],
+    ) -> Awaitable[TG_MessageResponse]:
+        """
+        Edit the caption of a message sent by the bot.
+
+        :param int message_id: Identifier of the message to edit
+        :param str caption: New caption
+        :param options: Additional editMessageCaption options (see
+            https://core.telegram.org/bots/api#editmessagecaption)
+        """
+        return self.bot.api_call(
+            "editMessageCaption",
+            chat_id=self.id,
+            message_id=message_id,
+            caption=caption,
+            **options,
+        )
+
+    def edit_message_media(
+        self,
+        message_id: int,
+        media: dict[str, Any],
+        **options: Unpack[TG_EditMessageMediaOpts],
+    ) -> Awaitable[TG_MessageResponse]:
+        """
+        Edit the media (photo/video/document/audio/animation) of a message
+        sent by the bot.
+
+        :param int message_id: Identifier of the message to edit
+        :param media: A serialized InputMedia object describing the new media
+            (see https://core.telegram.org/bots/api#inputmedia)
+        :param options: Additional editMessageMedia options (see
+            https://core.telegram.org/bots/api#editmessagemedia)
+        """
+        # ponytail: media typed as dict[str, Any] rather than the full
+        # InputMedia union (7 variants) — model properly if callers need
+        # static checking per media kind
+        return self.bot.api_call(
+            "editMessageMedia",
+            chat_id=self.id,
+            message_id=message_id,
+            media=media,
+            **options,
+        )
+
+    def copy_message(
+        self,
+        from_chat_id: int | str,
+        message_id: int,
+        **options: Unpack[TG_CopyMessageOpts],
+    ) -> Awaitable[Any]:
+        """
+        Copy a message (no "Forwarded from" link) into this chat.
+
+        :param from_chat_id: ID of the chat the message is copied from
+        :param int message_id: Identifier of the message to copy
+        :param options: Additional copyMessage options (see
+            https://core.telegram.org/bots/api#copymessage)
+        """
+        return self.bot.api_call(
+            "copyMessage",
+            chat_id=self.id,
+            from_chat_id=from_chat_id,
+            message_id=message_id,
+            **options,
+        )
+
+    def copy_messages(
+        self,
+        from_chat_id: int | str,
+        message_ids: list[int],
+        **options: Unpack[TG_CopyMessagesOpts],
+    ) -> Awaitable[Any]:
+        """
+        Copy 1-100 messages (no "Forwarded from" link) into this chat.
+
+        :param from_chat_id: ID of the chat the messages are copied from
+        :param message_ids: Identifiers of the messages to copy
+        :param options: Additional copyMessages options (see
+            https://core.telegram.org/bots/api#copymessages)
+        """
+        return self.bot.api_call(
+            "copyMessages",
+            chat_id=self.id,
+            from_chat_id=from_chat_id,
+            message_ids=message_ids,
+            **options,
+        )
+
+    def forward_messages(
+        self,
+        from_chat_id: int | str,
+        message_ids: list[int],
+        **options: Unpack[TG_ForwardMessageOpts],
+    ) -> Awaitable[Any]:
+        """
+        Forward 1-100 messages into this chat.
+
+        :param from_chat_id: ID of the chat the messages are forwarded from
+        :param message_ids: Identifiers of the messages to forward
+        :param options: Additional forwardMessages options (see
+            https://core.telegram.org/bots/api#forwardmessages)
+        """
+        return self.bot.api_call(
+            "forwardMessages",
+            chat_id=self.id,
+            from_chat_id=from_chat_id,
+            message_ids=message_ids,
+            **options,
+        )
+
+    def delete_messages(self, message_ids: list[int]) -> Awaitable[TG_BoolResponse]:
+        """
+        Delete multiple messages from this chat at once.
+
+        :param message_ids: Identifiers of the messages to delete, 1-100
+        """
+        return self.bot.api_call(
+            "deleteMessages", chat_id=self.id, message_ids=message_ids
         )
 
     def get_chat(self) -> Awaitable[TG_GetChatResponse]:
@@ -521,19 +692,25 @@ class Chat:
         )
 
     def forward_message(
-        self, from_chat_id: int, message_id: int
+        self,
+        from_chat_id: int,
+        message_id: int,
+        **options: Unpack[TG_ForwardMessageOpts],
     ) -> Awaitable[TG_MessageResponse]:
         """
         Forward a message from another chat to this chat.
 
         :param int from_chat_id: ID of the chat to forward the message from
         :param int message_id: ID of the message to forward
+        :param options: Additional forwardMessage options (see
+            https://core.telegram.org/bots/api#forwardmessage)
         """
         return self.bot.api_call(
             "forwardMessage",
             chat_id=self.id,
             from_chat_id=from_chat_id,
             message_id=message_id,
+            **options,
         )
 
     def ban_chat_member(

@@ -1025,15 +1025,53 @@ class TG_SendMessageOpts_API(TG_SendOpts, total=False):
     parse_mode: Literal["HTML", "Markdown"]
 
 
+class TG_EditMessageLiveLocationOpts(TypedDict, total=False):
+    business_connection_id: str
+    live_period: int
+    horizontal_accuracy: float
+    heading: int
+    proximity_alert_radius: int
+    reply_markup: TG_InlineKeyboardMarkup
+
+
+class TG_StopMessageLiveLocationOpts(TypedDict, total=False):
+    business_connection_id: str
+    reply_markup: TG_InlineKeyboardMarkup
+
+
+class TG_EditMessageCaptionOpts(TypedDict, total=False):
+    business_connection_id: str
+    parse_mode: str
+    caption_entities: list[TG_MessageEntity]
+    show_caption_above_media: bool
+    reply_markup: TG_InlineKeyboardMarkup
+
+
+class TG_EditMessageMediaOpts(TypedDict, total=False):
+    business_connection_id: str
+    reply_markup: TG_InlineKeyboardMarkup
+
+
+class TG_CopyMessageOpts(TG_SendOpts, total=False):
+    caption: str
+    parse_mode: str
+    caption_entities: list[TG_MessageEntity]
+    show_caption_above_media: bool
+
+
+class TG_CopyMessagesOpts(TypedDict, total=False):
+    message_thread_id: int
+    disable_notification: bool
+    protect_content: bool
+    remove_caption: bool
+
+
 class TG_ForwardMessageOpts(TypedDict, total=False):
-    chat_id: Required[str | int]
     message_thread_id: int
     direct_messages_topic_id: int
-    from_chat_id: Required[str | int]
     video_start_timestamp: int
     disable_notification: bool
     protect_content: bool
-    message_id: Required[int]
 
 
 class TG_CreateForumTopicOpts(TypedDict, total=False):

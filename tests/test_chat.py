@@ -225,3 +225,44 @@ def test_send_poll_dice_animation_video_note() -> None:
 
     chat.stop_poll(1337)
     assert bot.calls["stopPoll"]["message_id"] == 1337
+
+
+def test_edit_message_live_location_caption_and_media() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.edit_message_live_location(1337, 13.0, 37.0)
+    assert bot.calls["editMessageLiveLocation"]["latitude"] == 13.0
+
+    chat.stop_message_live_location(1337)
+    assert bot.calls["stopMessageLiveLocation"]["message_id"] == 1337
+
+    chat.edit_message_caption(1337, caption="new caption")
+    assert bot.calls["editMessageCaption"]["caption"] == "new caption"
+
+    chat.edit_message_media(1337, {"type": "photo", "media": "file_id"})
+    assert bot.calls["editMessageMedia"]["media"] == {
+        "type": "photo",
+        "media": "file_id",
+    }
+
+
+def test_copy_forward_and_delete_messages() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.forward_message(99, 5, disable_notification=True)
+    assert bot.calls["forwardMessage"]["message_id"] == 5
+    assert bot.calls["forwardMessage"]["disable_notification"] is True
+
+    chat.copy_message(99, 5)
+    assert bot.calls["copyMessage"]["message_id"] == 5
+
+    chat.copy_messages(99, [5, 6])
+    assert bot.calls["copyMessages"]["message_ids"] == [5, 6]
+
+    chat.forward_messages(99, [5, 6])
+    assert bot.calls["forwardMessages"]["message_ids"] == [5, 6]
+
+    chat.delete_messages([5, 6])
+    assert bot.calls["deleteMessages"]["message_ids"] == [5, 6]
