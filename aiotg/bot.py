@@ -1045,6 +1045,28 @@ class Bot:
         """
         return self.api_call("deleteWebhook")
 
+    def get_webhook_info(self) -> Awaitable[Any]:
+        """
+        Get current webhook status. Returns an object with url set to an
+        empty string if the bot is using getUpdates instead.
+        """
+        return self.api_call("getWebhookInfo")
+
+    def close(self) -> Awaitable[TG_BoolResponse]:
+        """
+        Close the bot instance before moving it from one local Bot API
+        server to another. Distinct from closing the aiohttp session (see
+        Bot.session / loop.run_until_complete(self.session.close())).
+        """
+        return self.api_call("close")
+
+    def log_out(self) -> Awaitable[TG_BoolResponse]:
+        """
+        Log out from the cloud Bot API server before launching the bot
+        locally. Not supported when running the bot against a local server.
+        """
+        return self.api_call("logOut")
+
     def on_cleanup(self, action: Callable[[], Any]) -> None:
         """
         You can set an action that will be executed before closing the loop

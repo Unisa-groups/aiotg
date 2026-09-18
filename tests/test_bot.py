@@ -115,3 +115,16 @@ def test_sticker_set_management() -> None:
 
     bot.delete_sticker_set("cats_by_bot")
     assert bot.calls["deleteStickerSet"]["name"] == "cats_by_bot"
+
+
+def test_webhook_info_close_and_log_out() -> None:
+    bot = MockBot()
+
+    bot.get_webhook_info()
+    assert "getWebhookInfo" in bot.calls
+
+    bot.close()
+    assert "close" in bot.calls
+
+    bot.log_out()
+    assert "logOut" in bot.calls
