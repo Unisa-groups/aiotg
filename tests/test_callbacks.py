@@ -200,7 +200,9 @@ def test_not_handled_update() -> None:
         nonlocal called_with
         called_with = update
 
-    update = cast(TG_Update, cast(object, {"update_id": 0, "poll": {}}))
+    update = cast(
+        TG_Update, cast(object, {"update_id": 0, "some_future_update_type": {}})
+    )
     with LogCapture() as log:
         bot._process_update(update)
         log.check(
@@ -208,6 +210,35 @@ def test_not_handled_update() -> None:
             ("aiotg", "ERROR", "don't know how to handle update: %s" % (update,)),
         )
     assert called_with == update
+
+
+NEW_UPDATE_HANDLERS = [
+    "poll",
+    "poll_answer",
+    "my_chat_member",
+    "chat_member",
+    "chat_join_request",
+    "chat_boost",
+    "removed_chat_boost",
+    "message_reaction",
+    "message_reaction_count",
+]
+
+
+@pytest.mark.parametrize("upd_type", NEW_UPDATE_HANDLERS)
+def test_new_update_handlers(upd_type: str) -> None:
+    called_with: Any = None
+
+    def _(payload: Any) -> None:
+        nonlocal called_with
+        called_with = payload
+
+    getattr(bot, upd_type)(_)
+
+    payload = {"marker": upd_type}
+    update = cast(TG_Update, cast(object, {"update_id": 0, upd_type: payload}))
+    bot._process_update(update)
+    assert called_with == payload
 
 
 @pytest.mark.parametrize("mt", MESSAGE_TYPES)

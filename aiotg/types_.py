@@ -183,8 +183,35 @@ TG_InlineQueryResult = Any
 TG_InlineQueryResultsButton = Any
 TG_BusinessConnection = Any
 TG_BusinessMessagesDeleted = Any
-TG_MessageReactionUpdated = Any
-TG_MessageReactionCountUpdated = Any
+
+
+class TG_ReactionCount(TypedDict, total=True):
+    type: "TG_ReactionType"
+    total_count: int
+
+
+TG_MessageReactionUpdated = TypedDict(
+    "TG_MessageReactionUpdated",
+    {
+        "chat": Required["TG_Chat"],
+        "message_id": Required[int],
+        "user": NotRequired["TG_User"],
+        "actor_chat": NotRequired["TG_Chat"],
+        "date": Required[int],
+        "old_reaction": Required[list["TG_ReactionType"]],
+        "new_reaction": Required[list["TG_ReactionType"]],
+    },
+    total=True,
+)
+
+
+class TG_MessageReactionCountUpdated(TypedDict, total=True):
+    chat: "TG_Chat"
+    message_id: int
+    date: int
+    reactions: list[TG_ReactionCount]
+
+
 TG_ShippingQuery = Any
 TG_PaidMediaPurchaed = Any
 
@@ -196,10 +223,54 @@ class TG_PollAnswer(TypedDict, total=False):
     option_ids: Required[list[int]]
 
 
-TG_ChatMemberUpdated = Any
-TG_ChatJoinRequest = Any
-TG_ChatBoostUpdated = Any
-TG_ChatBoostRemoved = Any
+TG_ChatMemberUpdated = TypedDict(
+    "TG_ChatMemberUpdated",
+    {
+        "chat": Required["TG_Chat"],
+        "from": Required["TG_User"],
+        "date": Required[int],
+        "old_chat_member": Required["TG_ChatMember"],
+        "new_chat_member": Required["TG_ChatMember"],
+        "invite_link": NotRequired["TG_ChatInviteLink"],
+        "via_join_request": NotRequired[bool],
+        "via_chat_folder_invite_link": NotRequired[bool],
+    },
+    total=True,
+)
+
+TG_ChatJoinRequest = TypedDict(
+    "TG_ChatJoinRequest",
+    {
+        "chat": Required["TG_Chat"],
+        "from": Required["TG_User"],
+        "user_chat_id": Required[int],
+        "date": Required[int],
+        "bio": NotRequired[str],
+        "invite_link": NotRequired["TG_ChatInviteLink"],
+    },
+    total=True,
+)
+
+
+class TG_ChatBoost(TypedDict, total=False):
+    boost_id: Required[str]
+    add_date: Required[int]
+    expiration_date: Required[int]
+    source: Required[Any]  # ChatBoostSource union — see Global Constraints
+
+
+class TG_ChatBoostUpdated(TypedDict, total=True):
+    chat: "TG_Chat"
+    boost: TG_ChatBoost
+
+
+class TG_ChatBoostRemoved(TypedDict, total=False):
+    chat: Required["TG_Chat"]
+    boost_id: Required[str]
+    remove_date: Required[int]
+    source: Required[Any]
+
+
 TG_InlineQuery = Any
 TG_CallbackQuery = Any
 TG_PreCheckoutQuery = Any

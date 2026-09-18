@@ -20,6 +20,10 @@ from .types_ import (
     TG_BotCommandScopeOpts,
     TG_CallbackQueryOpts,
     TG_CallbackQuerySrc,
+    TG_ChatBoostRemoved,
+    TG_ChatBoostUpdated,
+    TG_ChatJoinRequest,
+    TG_ChatMemberUpdated,
     TG_ChatMenuButtonOpts,
     TG_ChosenInlineResultSrc,
     TG_CreateNewStickerSetOpts,
@@ -36,7 +40,11 @@ from .types_ import (
     TG_Location,
     TG_MaskPosition,
     TG_Message,
+    TG_MessageReactionCountUpdated,
+    TG_MessageReactionUpdated,
     TG_MessageResponse,
+    TG_Poll,
+    TG_PollAnswer,
     TG_PreCheckoutQuerySrc,
     TG_SendFileInput,
     TG_SendMessageOpts,
@@ -83,6 +91,17 @@ MessageHandlerDecorator = Callable[[MessageHandler], MessageHandler]
 
 # Not handled update handlers
 DefaultNotHandledUpdateHandler = Callable[["TG_Update"], Any]
+
+# Poll, chat member, chat boost and reaction update handlers
+DefaultPollHandler = Callable[["TG_Poll"], Any]
+DefaultPollAnswerHandler = Callable[["TG_PollAnswer"], Any]
+DefaultMyChatMemberHandler = Callable[["TG_ChatMemberUpdated"], Any]
+DefaultChatMemberHandler = Callable[["TG_ChatMemberUpdated"], Any]
+DefaultChatJoinRequestHandler = Callable[["TG_ChatJoinRequest"], Any]
+DefaultChatBoostHandler = Callable[["TG_ChatBoostUpdated"], Any]
+DefaultRemovedChatBoostHandler = Callable[["TG_ChatBoostRemoved"], Any]
+DefaultMessageReactionHandler = Callable[["TG_MessageReactionUpdated"], Any]
+DefaultMessageReactionCountHandler = Callable[["TG_MessageReactionCountUpdated"], Any]
 
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
@@ -189,6 +208,21 @@ class Bot:
         ) = lambda res: None
         self._default_not_handled_update: DefaultNotHandledUpdateHandler = (
             lambda update: None
+        )
+        self._default_poll: DefaultPollHandler = lambda poll: None
+        self._default_poll_answer: DefaultPollAnswerHandler = lambda answer: None
+        self._default_my_chat_member: DefaultMyChatMemberHandler = lambda cmu: None
+        self._default_chat_member: DefaultChatMemberHandler = lambda cmu: None
+        self._default_chat_join_request: DefaultChatJoinRequestHandler = (
+            lambda req: None
+        )
+        self._default_chat_boost: DefaultChatBoostHandler = lambda boost: None
+        self._default_removed_chat_boost: DefaultRemovedChatBoostHandler = (
+            lambda boost: None
+        )
+        self._default_message_reaction: DefaultMessageReactionHandler = lambda r: None
+        self._default_message_reaction_count: DefaultMessageReactionCountHandler = (
+            lambda r: None
         )
 
     async def loop(self) -> None:
@@ -348,6 +382,74 @@ class Bot:
         >>>     logger.warning("unhandled update: %s", update)
         """
         self._default_not_handled_update = callback
+        return callback
+
+    def poll(self, callback: DefaultPollHandler) -> DefaultPollHandler:
+        """
+        Set callback for incoming poll updates (state changes of an
+        anonymous poll the bot sent).
+        """
+        self._default_poll = callback
+        return callback
+
+    def poll_answer(
+        self, callback: DefaultPollAnswerHandler
+    ) -> DefaultPollAnswerHandler:
+        """Set callback for poll_answer updates (a user's vote changed)."""
+        self._default_poll_answer = callback
+        return callback
+
+    def my_chat_member(
+        self, callback: DefaultMyChatMemberHandler
+    ) -> DefaultMyChatMemberHandler:
+        """Set callback for changes to the bot's own status in a chat."""
+        self._default_my_chat_member = callback
+        return callback
+
+    def chat_member(
+        self, callback: DefaultChatMemberHandler
+    ) -> DefaultChatMemberHandler:
+        """
+        Set callback for other chat members' status changes. Requires
+        explicitly listing "chat_member" in allowed_updates.
+        """
+        self._default_chat_member = callback
+        return callback
+
+    def chat_join_request(
+        self, callback: DefaultChatJoinRequestHandler
+    ) -> DefaultChatJoinRequestHandler:
+        """Set callback for chat join requests."""
+        self._default_chat_join_request = callback
+        return callback
+
+    def chat_boost(self, callback: DefaultChatBoostHandler) -> DefaultChatBoostHandler:
+        """Set callback for a chat boost being added or changed."""
+        self._default_chat_boost = callback
+        return callback
+
+    def removed_chat_boost(
+        self, callback: DefaultRemovedChatBoostHandler
+    ) -> DefaultRemovedChatBoostHandler:
+        """Set callback for a chat boost being removed."""
+        self._default_removed_chat_boost = callback
+        return callback
+
+    def message_reaction(
+        self, callback: DefaultMessageReactionHandler
+    ) -> DefaultMessageReactionHandler:
+        """
+        Set callback for a user's reaction on a message changing. Requires
+        explicitly listing "message_reaction" in allowed_updates.
+        """
+        self._default_message_reaction = callback
+        return callback
+
+    def message_reaction_count(
+        self, callback: DefaultMessageReactionCountHandler
+    ) -> DefaultMessageReactionCountHandler:
+        """Set callback for anonymized reaction count updates on a message."""
+        self._default_message_reaction_count = callback
         return callback
 
     def _register(
@@ -1179,6 +1281,26 @@ class Bot:
             elif "chosen_inline_result" in update:
                 coro = self._process_chosen_inline_result(
                     update["chosen_inline_result"]
+                )
+            elif "poll" in update:
+                coro = self._default_poll(update["poll"])
+            elif "poll_answer" in update:
+                coro = self._default_poll_answer(update["poll_answer"])
+            elif "my_chat_member" in update:
+                coro = self._default_my_chat_member(update["my_chat_member"])
+            elif "chat_member" in update:
+                coro = self._default_chat_member(update["chat_member"])
+            elif "chat_join_request" in update:
+                coro = self._default_chat_join_request(update["chat_join_request"])
+            elif "chat_boost" in update:
+                coro = self._default_chat_boost(update["chat_boost"])
+            elif "removed_chat_boost" in update:
+                coro = self._default_removed_chat_boost(update["removed_chat_boost"])
+            elif "message_reaction" in update:
+                coro = self._default_message_reaction(update["message_reaction"])
+            elif "message_reaction_count" in update:
+                coro = self._default_message_reaction_count(
+                    update["message_reaction_count"]
                 )
             else:
                 coro = self._process_not_handled_update(update)
