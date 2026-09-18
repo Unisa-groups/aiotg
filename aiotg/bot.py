@@ -15,9 +15,13 @@ from aiohttp.client import _RequestContextManager
 from .chat import Chat, Sender
 from .reloader import run_with_reloader
 from .types_ import (
+    TG_BotCommand,
+    TG_BotCommandScopeOpts,
     TG_CallbackQueryOpts,
     TG_CallbackQuerySrc,
+    TG_ChatMenuButtonOpts,
     TG_ChosenInlineResultSrc,
+    TG_DefaultAdministratorRightsOpts,
     TG_EditMessageReplyMarkupOpts,
     TG_EditMessageTextOpts,
     TG_File,
@@ -25,6 +29,7 @@ from .types_ import (
     TG_InlineQueryAnswerOpts,
     TG_InlineQueryResult,
     TG_InlineQuerySrc,
+    TG_LanguageCodeOpts,
     TG_Location,
     TG_Message,
     TG_MessageResponse,
@@ -683,6 +688,129 @@ class Bot:
         Get custom emoji stickers that can be used as forum topic icons.
         """
         return self.api_call("getForumTopicIconStickers")
+
+    def set_my_commands(
+        self,
+        commands: list[TG_BotCommand],
+        **options: Unpack[TG_BotCommandScopeOpts],
+    ) -> Awaitable[Any]:
+        """
+        Change the list of the bot's commands.
+
+        :param commands: List of bot commands to set
+        :param options: Additional setMyCommands options (see
+            https://core.telegram.org/bots/api#setmycommands)
+        """
+        return self.api_call("setMyCommands", commands=commands, **options)
+
+    def get_my_commands(
+        self, **options: Unpack[TG_BotCommandScopeOpts]
+    ) -> Awaitable[Any]:
+        """
+        Get the current list of the bot's commands for the given scope/language.
+        """
+        return self.api_call("getMyCommands", **options)
+
+    def delete_my_commands(
+        self, **options: Unpack[TG_BotCommandScopeOpts]
+    ) -> Awaitable[Any]:
+        """
+        Delete the list of the bot's commands for the given scope/language.
+        """
+        return self.api_call("deleteMyCommands", **options)
+
+    def set_my_name(
+        self, name: str = "", **options: Unpack[TG_LanguageCodeOpts]
+    ) -> Awaitable[Any]:
+        """
+        Change the bot's name.
+
+        :param str name: New bot name, 0-64 characters (empty to remove)
+        """
+        return self.api_call("setMyName", name=name, **options)
+
+    def get_my_name(self, **options: Unpack[TG_LanguageCodeOpts]) -> Awaitable[Any]:
+        """Get the current bot name for the given language."""
+        return self.api_call("getMyName", **options)
+
+    def set_my_description(
+        self, description: str = "", **options: Unpack[TG_LanguageCodeOpts]
+    ) -> Awaitable[Any]:
+        """
+        Change the bot's description (shown on the empty chat screen).
+
+        :param str description: New description, 0-512 characters
+        """
+        return self.api_call("setMyDescription", description=description, **options)
+
+    def get_my_description(
+        self, **options: Unpack[TG_LanguageCodeOpts]
+    ) -> Awaitable[Any]:
+        """Get the current bot description for the given language."""
+        return self.api_call("getMyDescription", **options)
+
+    def set_my_short_description(
+        self, short_description: str = "", **options: Unpack[TG_LanguageCodeOpts]
+    ) -> Awaitable[Any]:
+        """
+        Change the bot's short description (shown on the bot's profile page).
+
+        :param str short_description: New short description, 0-120 characters
+        """
+        return self.api_call(
+            "setMyShortDescription", short_description=short_description, **options
+        )
+
+    def get_my_short_description(
+        self, **options: Unpack[TG_LanguageCodeOpts]
+    ) -> Awaitable[Any]:
+        """Get the current bot short description for the given language."""
+        return self.api_call("getMyShortDescription", **options)
+
+    def set_chat_menu_button(
+        self, **options: Unpack[TG_ChatMenuButtonOpts]
+    ) -> Awaitable[Any]:
+        """
+        Change the bot's menu button in a private chat, or the default menu
+        button.
+
+        :param options: Additional setChatMenuButton options (see
+            https://core.telegram.org/bots/api#setchatmenubutton)
+        """
+        return self.api_call("setChatMenuButton", **options)
+
+    def get_chat_menu_button(self, chat_id: int | str | None = None) -> Awaitable[Any]:
+        """
+        Get the current menu button for a private chat, or the default one.
+
+        :param chat_id: Target private chat, or None for the default button
+        """
+        options: dict[str, Any] = {"chat_id": chat_id} if chat_id is not None else {}
+        return self.api_call("getChatMenuButton", **options)
+
+    def set_my_default_administrator_rights(
+        self, **options: Unpack[TG_DefaultAdministratorRightsOpts]
+    ) -> Awaitable[Any]:
+        """
+        Change the default administrator rights requested by the bot when
+        it's added as an administrator to groups or channels.
+
+        :param options: Additional setMyDefaultAdministratorRights options (see
+            https://core.telegram.org/bots/api#setmydefaultadministratorrights)
+        """
+        return self.api_call("setMyDefaultAdministratorRights", **options)
+
+    def get_my_default_administrator_rights(
+        self, for_channels: bool = False
+    ) -> Awaitable[Any]:
+        """
+        Get the current default administrator rights requested by the bot.
+
+        :param bool for_channels: Get rights for channels instead of groups
+        """
+        return self.api_call(
+            "getMyDefaultAdministratorRights", for_channels=for_channels
+        )
 
     def stop(self) -> None:
         self._running = False

@@ -179,6 +179,33 @@ class TG_AdminPermissions(TypedDict, total=False):
     can_manage_direct_messages: bool
 
 
+class TG_BotCommand(TypedDict, total=True):
+    command: str
+    description: str
+
+
+# ponytail: scope/menu_button typed loosely rather than modeling the full
+# BotCommandScope (7 variants) / MenuButton (3 variants) unions — expand to
+# real TypedDict unions if a caller needs static checking of scope/button kind
+class TG_BotCommandScopeOpts(TypedDict, total=False):
+    scope: dict[str, Any]
+    language_code: str
+
+
+class TG_LanguageCodeOpts(TypedDict, total=False):
+    language_code: str
+
+
+class TG_ChatMenuButtonOpts(TypedDict, total=False):
+    chat_id: int | str
+    menu_button: dict[str, Any]
+
+
+class TG_DefaultAdministratorRightsOpts(TypedDict, total=False):
+    rights: TG_AdminPermissions
+    for_channels: bool
+
+
 class TG_User(TypedDict, total=False):
     id: Required[int]
     is_bot: Required[bool]
