@@ -27,6 +27,7 @@ from .types_ import (
     TG_MessageResponse,
     TG_PinChatMessageOpts,
     TG_PromoteChatMemberOpts,
+    TG_ReactionType,
     TG_ReplyMarkupOpts,
     TG_RestrictChatMemberOpts,
     TG_SendAnimationOpts,
@@ -302,6 +303,29 @@ class Chat:
         """
         return self.bot.api_call(
             "deleteMessages", chat_id=self.id, message_ids=message_ids
+        )
+
+    def set_message_reaction(
+        self,
+        message_id: int,
+        reaction: list[TG_ReactionType] | None = None,
+        is_big: bool = False,
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Set the bot's reaction on a message. An empty reaction list removes
+        the bot's current reaction.
+
+        :param int message_id: Identifier of the target message
+        :param reaction: New list of reactions (see
+            https://core.telegram.org/bots/api#setmessagereaction)
+        :param bool is_big: Whether to show a big single reaction animation
+        """
+        return self.bot.api_call(
+            "setMessageReaction",
+            chat_id=self.id,
+            message_id=message_id,
+            reaction=reaction or [],
+            is_big=is_big,
         )
 
     def get_chat(self) -> Awaitable[TG_GetChatResponse]:

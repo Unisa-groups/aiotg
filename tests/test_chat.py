@@ -266,3 +266,17 @@ def test_copy_forward_and_delete_messages() -> None:
 
     chat.delete_messages([5, 6])
     assert bot.calls["deleteMessages"]["message_ids"] == [5, 6]
+
+
+def test_set_message_reaction() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.set_message_reaction(1337, [{"type": "emoji", "emoji": "\U0001f44d"}])
+    assert bot.calls["setMessageReaction"]["message_id"] == 1337
+    assert bot.calls["setMessageReaction"]["reaction"] == [
+        {"type": "emoji", "emoji": "\U0001f44d"}
+    ]
+
+    chat.set_message_reaction(1338)
+    assert bot.calls["setMessageReaction"]["reaction"] == []

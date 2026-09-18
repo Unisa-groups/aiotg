@@ -470,6 +470,17 @@ TG_MessageEntity = TypedDict(
 )
 
 
+TG_ReactionType = TypedDict(
+    "TG_ReactionType",
+    {
+        "type": Required[Literal["emoji", "custom_emoji"]],
+        "emoji": NotRequired[str],
+        "custom_emoji_id": NotRequired[str],
+    },
+    total=True,
+)
+
+
 class TG_MessageAutoDeleteTimerChanged(TypedDict, total=True):
     message_auto_delete_time: int
 
