@@ -23,8 +23,10 @@ from .types_ import (
     TG_PromoteChatMemberOpts,
     TG_ReplyMarkupOpts,
     TG_RestrictChatMemberOpts,
+    TG_SendAnimationOpts,
     TG_SendAudioOpts,
     TG_SendContactOpts,
+    TG_SendDiceOpts,
     TG_SendDocumentOpts,
     TG_SendFileInput,
     TG_SendLocationOpts,
@@ -32,8 +34,10 @@ from .types_ import (
     TG_SendMediaGroupResponse,
     TG_SendMessageOpts,
     TG_SendPhotoOpts,
+    TG_SendPollOpts,
     TG_SendStickerOpts,
     TG_SendVenueOpts,
+    TG_SendVideoNoteOpts,
     TG_SendVideoOpts,
     TG_SendVoiceOpts,
     TG_SetChatPermissionsOpts,
@@ -431,6 +435,89 @@ class Chat:
             disable_notification=disable_notification,
             reply_to_message_id=reply_to_message_id,
             **options,
+        )
+
+    def send_poll(
+        self,
+        question: str,
+        poll_options: list[str],
+        **options: Unpack[TG_SendPollOpts],
+    ) -> Awaitable[TG_MessageResponse]:
+        """
+        Send a native poll.
+
+        :param str question: Poll question, 1-300 characters
+        :param poll_options: 2-12 answer options
+        :param options: Additional sendPoll options (see
+            https://core.telegram.org/bots/api#sendpoll)
+        """
+        return self.bot.api_call(
+            "sendPoll",
+            chat_id=str(self.id),
+            question=question,
+            options=poll_options,
+            **options,
+        )
+
+    def send_dice(
+        self, **options: Unpack[TG_SendDiceOpts]
+    ) -> Awaitable[TG_MessageResponse]:
+        """
+        Send an animated emoji that displays a random value (dice, dart, etc).
+
+        :param options: Additional sendDice options, including emoji (see
+            https://core.telegram.org/bots/api#senddice)
+        """
+        return self.bot.api_call("sendDice", chat_id=str(self.id), **options)
+
+    def send_animation(
+        self,
+        animation: TG_SendFileInput,
+        caption: str = "",
+        **options: Unpack[TG_SendAnimationOpts],
+    ) -> Awaitable[TG_MessageResponse]:
+        """
+        Send an animation file (GIF or H.264/MPEG-4 AVC video without sound).
+
+        :param animation: Object containing the animation data
+        :param str caption: Animation caption (optional)
+        :param options: Additional sendAnimation options (see
+            https://core.telegram.org/bots/api#sendanimation)
+        """
+        return self.bot.api_call(
+            "sendAnimation",
+            chat_id=str(self.id),
+            animation=animation,
+            caption=caption,
+            **options,
+        )
+
+    def send_video_note(
+        self, video_note: TG_SendFileInput, **options: Unpack[TG_SendVideoNoteOpts]
+    ) -> Awaitable[TG_MessageResponse]:
+        """
+        Send a rounded square mp4 video without sound (video message).
+
+        :param video_note: Object containing the video note data
+        :param options: Additional sendVideoNote options (see
+            https://core.telegram.org/bots/api#sendvideonote)
+        """
+        return self.bot.api_call(
+            "sendVideoNote", chat_id=str(self.id), video_note=video_note, **options
+        )
+
+    def stop_poll(
+        self, message_id: int, reply_markup: TG_InlineKeyboardMarkup | None = None
+    ) -> Awaitable[Any]:
+        """
+        Stop a poll sent by the bot and return the final results.
+
+        :param int message_id: Identifier of the original poll message
+        :param dict reply_markup: New inline keyboard for the stopped message
+        """
+        options: dict[str, Any] = {"reply_markup": reply_markup} if reply_markup else {}
+        return self.bot.api_call(
+            "stopPoll", chat_id=self.id, message_id=message_id, **options
         )
 
     def forward_message(

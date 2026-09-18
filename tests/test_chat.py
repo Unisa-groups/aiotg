@@ -204,3 +204,24 @@ def test_general_forum_topic_management() -> None:
 
     chat.unpin_all_general_forum_topic_messages()
     assert "unpinAllGeneralForumTopicMessages" in bot.calls
+
+
+def test_send_poll_dice_animation_video_note() -> None:
+    bot = MockBot()
+    chat = Chat(bot, 42)
+
+    chat.send_poll("Cats or dogs?", ["Cats", "Dogs"])
+    assert bot.calls["sendPoll"]["question"] == "Cats or dogs?"
+    assert bot.calls["sendPoll"]["options"] == ["Cats", "Dogs"]
+
+    chat.send_dice()
+    assert "sendDice" in bot.calls
+
+    chat.send_animation(b"foo")
+    assert "sendAnimation" in bot.calls
+
+    chat.send_video_note(b"foo")
+    assert "sendVideoNote" in bot.calls
+
+    chat.stop_poll(1337)
+    assert bot.calls["stopPoll"]["message_id"] == 1337

@@ -78,15 +78,68 @@ class TG_Sticker(TG_PhotoSize, total=False):
 TG_Voice = Any
 TG_PaidMedia = Any
 TG_Checklist = Any
-TG_Contact = Any
-TG_Dice = Any
+
+
+class TG_Contact(TypedDict, total=False):
+    phone_number: Required[str]
+    first_name: Required[str]
+    last_name: str
+    user_id: int
+    vcard: str
+
+
+class TG_Dice(TypedDict, total=True):
+    emoji: str
+    value: int
+
+
 TG_Game = Any
 TG_Giveaway = Any
 TG_GiveawayWinners = Any
 TG_Invoice = Any
-TG_Location = Any
-TG_Poll = Any
-TG_Venue = Any
+
+
+class TG_Location(TypedDict, total=False):
+    longitude: Required[float]
+    latitude: Required[float]
+    horizontal_accuracy: float
+    live_period: int
+    heading: int
+    proximity_alert_radius: int
+
+
+class TG_PollOption(TypedDict, total=False):
+    text: Required[str]
+    voter_count: Required[int]
+    text_entities: list["TG_MessageEntity"]
+
+
+class TG_Poll(TypedDict, total=False):
+    id: Required[str]
+    question: Required[str]
+    options: Required[list[TG_PollOption]]
+    total_voter_count: Required[int]
+    is_closed: Required[bool]
+    is_anonymous: Required[bool]
+    type: Required[Literal["regular", "quiz"]]
+    allows_multiple_answers: Required[bool]
+    correct_option_id: int
+    explanation: str
+    explanation_entities: list["TG_MessageEntity"]
+    open_period: int
+    close_date: int
+
+
+class TG_Venue(TypedDict, total=False):
+    location: Required[TG_Location]
+    title: Required[str]
+    address: Required[str]
+    foursquare_id: str
+    foursquare_type: str
+    google_place_id: str
+    google_place_type: str
+
+
 TG_TextQuote = Any
 TG_SuccessfulPayment = Any
 TG_RefundedPayment = Any
@@ -134,7 +187,15 @@ TG_MessageReactionUpdated = Any
 TG_MessageReactionCountUpdated = Any
 TG_ShippingQuery = Any
 TG_PaidMediaPurchaed = Any
-TG_PollAnswer = Any
+
+
+class TG_PollAnswer(TypedDict, total=False):
+    poll_id: Required[str]
+    voter_chat: "TG_Chat"
+    user: "TG_User"
+    option_ids: Required[list[int]]
+
+
 TG_ChatMemberUpdated = Any
 TG_ChatJoinRequest = Any
 TG_ChatBoostUpdated = Any
@@ -893,6 +954,42 @@ class TG_SendVoiceOpts(TG_SendOpts, total=False):
     parse_mode: str
     caption_entities: list[TG_MessageEntity]
     duration: int
+
+
+class TG_SendPollOpts(TG_SendOpts, total=False):
+    question_parse_mode: str
+    question_entities: list[TG_MessageEntity]
+    is_anonymous: bool
+    type: Literal["regular", "quiz"]
+    allows_multiple_answers: bool
+    correct_option_id: int
+    explanation: str
+    explanation_parse_mode: str
+    explanation_entities: list[TG_MessageEntity]
+    open_period: int
+    close_date: int
+    is_closed: bool
+
+
+class TG_SendDiceOpts(TG_SendOpts, total=False):
+    emoji: str
+
+
+class TG_SendAnimationOpts(TG_SendOpts, total=False):
+    duration: int
+    width: int
+    height: int
+    thumbnail: TG_SendFileInput
+    has_spoiler: bool
+    show_caption_above_media: bool
+    parse_mode: str
+    caption_entities: list[TG_MessageEntity]
+
+
+class TG_SendVideoNoteOpts(TG_SendOpts, total=False):
+    duration: int
+    length: int
+    thumbnail: TG_SendFileInput
 
 
 class TG_SendLocationOpts(TG_SendOpts, total=False):
