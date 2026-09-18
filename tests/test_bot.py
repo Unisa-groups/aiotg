@@ -1,4 +1,5 @@
 from aiotg.mock import MockBot
+from aiotg.types_ import TG_InputSticker
 
 
 def test_get_forum_topic_icon_stickers() -> None:
@@ -58,3 +59,59 @@ def test_chat_menu_button_and_default_admin_rights() -> None:
 
     bot.get_my_default_administrator_rights()
     assert "getMyDefaultAdministratorRights" in bot.calls
+
+
+def test_sticker_set_management() -> None:
+    bot = MockBot()
+    sticker: TG_InputSticker = {
+        "sticker": b"foo",
+        "format": "static",
+        "emoji_list": ["\U0001f600"],
+    }
+
+    bot.get_sticker_set("cats")
+    assert bot.calls["getStickerSet"]["name"] == "cats"
+
+    bot.get_custom_emoji_stickers(["1", "2"])
+    assert bot.calls["getCustomEmojiStickers"]["custom_emoji_ids"] == ["1", "2"]
+
+    bot.upload_sticker_file(7, b"foo", "static")
+    assert bot.calls["uploadStickerFile"]["user_id"] == 7
+
+    bot.create_new_sticker_set(7, "cats_by_bot", "Cats", [sticker])
+    assert bot.calls["createNewStickerSet"]["name"] == "cats_by_bot"
+
+    bot.add_sticker_to_set(7, "cats_by_bot", sticker)
+    assert bot.calls["addStickerToSet"]["name"] == "cats_by_bot"
+
+    bot.set_sticker_position_in_set("CAAA", 2)
+    assert bot.calls["setStickerPositionInSet"]["position"] == 2
+
+    bot.delete_sticker_from_set("CAAA")
+    assert bot.calls["deleteStickerFromSet"]["sticker"] == "CAAA"
+
+    bot.replace_sticker_in_set(7, "cats_by_bot", "CAAA", sticker)
+    assert bot.calls["replaceStickerInSet"]["old_sticker"] == "CAAA"
+
+    bot.set_sticker_emoji_list("CAAA", ["\U0001f600"])
+    assert bot.calls["setStickerEmojiList"]["emoji_list"] == ["\U0001f600"]
+
+    bot.set_sticker_keywords("CAAA", ["cat", "meow"])
+    assert bot.calls["setStickerKeywords"]["keywords"] == ["cat", "meow"]
+
+    bot.set_sticker_mask_position(
+        "CAAA", {"point": "forehead", "x_shift": 0.0, "y_shift": 0.0, "scale": 1.0}
+    )
+    assert bot.calls["setStickerMaskPosition"]["sticker"] == "CAAA"
+
+    bot.set_sticker_set_title("cats_by_bot", "Cats!")
+    assert bot.calls["setStickerSetTitle"]["title"] == "Cats!"
+
+    bot.set_sticker_set_thumbnail("cats_by_bot", 7, "static")
+    assert bot.calls["setStickerSetThumbnail"]["format"] == "static"
+
+    bot.set_custom_emoji_sticker_set_thumbnail("cats_by_bot", "1")
+    assert bot.calls["setCustomEmojiStickerSetThumbnail"]["custom_emoji_id"] == "1"
+
+    bot.delete_sticker_set("cats_by_bot")
+    assert bot.calls["deleteStickerSet"]["name"] == "cats_by_bot"

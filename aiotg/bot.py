@@ -5,7 +5,7 @@ import os
 import re
 import uuid
 from collections.abc import Awaitable
-from typing import Any, Callable, Unpack, overload
+from typing import Any, Callable, Literal, Unpack, overload
 from urllib.parse import urlparse
 
 import aiohttp
@@ -15,12 +15,14 @@ from aiohttp.client import _RequestContextManager
 from .chat import Chat, Sender
 from .reloader import run_with_reloader
 from .types_ import (
+    TG_BoolResponse,
     TG_BotCommand,
     TG_BotCommandScopeOpts,
     TG_CallbackQueryOpts,
     TG_CallbackQuerySrc,
     TG_ChatMenuButtonOpts,
     TG_ChosenInlineResultSrc,
+    TG_CreateNewStickerSetOpts,
     TG_DefaultAdministratorRightsOpts,
     TG_EditMessageReplyMarkupOpts,
     TG_EditMessageTextOpts,
@@ -29,11 +31,14 @@ from .types_ import (
     TG_InlineQueryAnswerOpts,
     TG_InlineQueryResult,
     TG_InlineQuerySrc,
+    TG_InputSticker,
     TG_LanguageCodeOpts,
     TG_Location,
+    TG_MaskPosition,
     TG_Message,
     TG_MessageResponse,
     TG_PreCheckoutQuerySrc,
+    TG_SendFileInput,
     TG_SendMessageOpts,
     TG_SetWebhookOpts,
     TG_Update,
@@ -811,6 +816,178 @@ class Bot:
         return self.api_call(
             "getMyDefaultAdministratorRights", for_channels=for_channels
         )
+
+    def get_sticker_set(self, name: str) -> Awaitable[Any]:
+        """Get a sticker set by name."""
+        return self.api_call("getStickerSet", name=name)
+
+    def get_custom_emoji_stickers(self, custom_emoji_ids: list[str]) -> Awaitable[Any]:
+        """Get information about custom emoji stickers by their identifiers."""
+        return self.api_call(
+            "getCustomEmojiStickers", custom_emoji_ids=custom_emoji_ids
+        )
+
+    def upload_sticker_file(
+        self,
+        user_id: int,
+        sticker: "TG_SendFileInput",
+        sticker_format: Literal["static", "animated", "video"],
+    ) -> Awaitable[Any]:
+        """
+        Upload a sticker file for later use in createNewStickerSet/addStickerToSet.
+
+        :param int user_id: Owner of the uploaded file
+        :param sticker: The sticker file itself
+        :param sticker_format: "static", "animated" or "video"
+        """
+        return self.api_call(
+            "uploadStickerFile",
+            user_id=user_id,
+            sticker=sticker,
+            sticker_format=sticker_format,
+        )
+
+    def create_new_sticker_set(
+        self,
+        user_id: int,
+        name: str,
+        title: str,
+        stickers: list[TG_InputSticker],
+        **options: Unpack[TG_CreateNewStickerSetOpts],
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Create a new sticker set owned by a user.
+
+        :param int user_id: User who will own the new sticker set
+        :param str name: Short name, e.g. "cats_by_mybot"
+        :param str title: Sticker set title
+        :param stickers: 1-50 initial stickers
+        :param options: Additional createNewStickerSet options (see
+            https://core.telegram.org/bots/api#createnewstickerset)
+        """
+        return self.api_call(
+            "createNewStickerSet",
+            user_id=user_id,
+            name=name,
+            title=title,
+            stickers=stickers,
+            **options,
+        )
+
+    def add_sticker_to_set(
+        self, user_id: int, name: str, sticker: TG_InputSticker
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Add a sticker to a set created by the bot. Max 50 stickers per regular
+        or custom emoji set, 200 per mask set.
+
+        :param int user_id: Sticker set owner
+        :param str name: Sticker set name
+        :param sticker: The sticker to add
+        """
+        return self.api_call(
+            "addStickerToSet", user_id=user_id, name=name, sticker=sticker
+        )
+
+    def set_sticker_position_in_set(
+        self, sticker: str, position: int
+    ) -> Awaitable[TG_BoolResponse]:
+        """Move a sticker in a set created by the bot to a specific position."""
+        return self.api_call(
+            "setStickerPositionInSet", sticker=sticker, position=position
+        )
+
+    def delete_sticker_from_set(self, sticker: str) -> Awaitable[TG_BoolResponse]:
+        """Delete a sticker from a set created by the bot."""
+        return self.api_call("deleteStickerFromSet", sticker=sticker)
+
+    def replace_sticker_in_set(
+        self, user_id: int, name: str, old_sticker: str, sticker: TG_InputSticker
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Replace an existing sticker in a set with a new one, keeping its position.
+
+        :param int user_id: Sticker set owner
+        :param str name: Sticker set name
+        :param str old_sticker: file_id of the sticker to replace
+        :param sticker: The replacement sticker
+        """
+        return self.api_call(
+            "replaceStickerInSet",
+            user_id=user_id,
+            name=name,
+            old_sticker=old_sticker,
+            sticker=sticker,
+        )
+
+    def set_sticker_emoji_list(
+        self, sticker: str, emoji_list: list[str]
+    ) -> Awaitable[TG_BoolResponse]:
+        """Change the emoji list associated with a sticker."""
+        return self.api_call(
+            "setStickerEmojiList", sticker=sticker, emoji_list=emoji_list
+        )
+
+    def set_sticker_keywords(
+        self, sticker: str, keywords: list[str] | None = None
+    ) -> Awaitable[TG_BoolResponse]:
+        """Change search keywords associated with a sticker."""
+        return self.api_call(
+            "setStickerKeywords", sticker=sticker, keywords=keywords or []
+        )
+
+    def set_sticker_mask_position(
+        self, sticker: str, mask_position: "TG_MaskPosition | None" = None
+    ) -> Awaitable[TG_BoolResponse]:
+        """Change the mask position of a mask sticker."""
+        options: dict[str, Any] = (
+            {"mask_position": mask_position} if mask_position else {}
+        )
+        return self.api_call("setStickerMaskPosition", sticker=sticker, **options)
+
+    def set_sticker_set_title(
+        self, name: str, title: str
+    ) -> Awaitable[TG_BoolResponse]:
+        """Set the title of a sticker set created by the bot."""
+        return self.api_call("setStickerSetTitle", name=name, title=title)
+
+    def set_sticker_set_thumbnail(
+        self,
+        name: str,
+        user_id: int,
+        sticker_format: Literal["static", "animated", "video"],
+        thumbnail: "TG_SendFileInput | None" = None,
+    ) -> Awaitable[TG_BoolResponse]:
+        """
+        Set the thumbnail of a regular or mask sticker set.
+
+        :param str name: Sticker set name
+        :param int user_id: Sticker set owner
+        :param sticker_format: "static", "animated" or "video"
+        :param thumbnail: New thumbnail, or None to drop it
+        """
+        options: dict[str, Any] = {"thumbnail": thumbnail} if thumbnail else {}
+        return self.api_call(
+            "setStickerSetThumbnail",
+            name=name,
+            user_id=user_id,
+            format=sticker_format,
+            **options,
+        )
+
+    def set_custom_emoji_sticker_set_thumbnail(
+        self, name: str, custom_emoji_id: str = ""
+    ) -> Awaitable[TG_BoolResponse]:
+        """Set the thumbnail of a custom emoji sticker set."""
+        return self.api_call(
+            "setCustomEmojiStickerSetThumbnail",
+            name=name,
+            custom_emoji_id=custom_emoji_id,
+        )
+
+    def delete_sticker_set(self, name: str) -> Awaitable[TG_BoolResponse]:
+        """Delete a sticker set created by the bot."""
+        return self.api_call("deleteStickerSet", name=name)
 
     def stop(self) -> None:
         self._running = False

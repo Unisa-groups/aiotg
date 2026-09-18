@@ -805,6 +805,19 @@ class TG_DeleteMessageOpts_API(TG_GetChatOpts_API):
 TG_SendFileInput = TG_InputFile | str
 
 
+class TG_InputSticker(TypedDict, total=False):
+    sticker: Required[TG_SendFileInput]
+    format: Required[Literal["static", "animated", "video"]]
+    emoji_list: Required[list[str]]
+    mask_position: TG_MaskPosition
+    keywords: list[str]
+
+
+class TG_CreateNewStickerSetOpts(TypedDict, total=False):
+    sticker_type: Literal["regular", "mask", "custom_emoji"]
+    needs_repainting: bool
+
+
 # Send Media contains all the options that the other ones have
 # It is a special case, in that the call already has a
 # disable notification field in the function call,
