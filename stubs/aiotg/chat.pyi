@@ -34,6 +34,7 @@ class Chat:
     """
     Wrapper for telegram chats, passed to most callbacks
     """
+
     def send_text(
         self, text: str, **options: Unpack[TG_SendMessageOpts]
     ) -> Awaitable[TG_MessageResponse]:
@@ -44,6 +45,7 @@ class Chat:
         :param options: Additional sendMessage options (see
             https://core.telegram.org/bots/api#sendmessage
         """
+
     def reply(
         self,
         text: str,
@@ -58,6 +60,7 @@ class Chat:
         :param str parse_mode: Text parsing mode (``"Markdown"``, ``"HTML"`` or
             ``None``)
         """
+
     def edit_text(
         self,
         message_id: int,
@@ -74,6 +77,7 @@ class Chat:
         :param str parse_mode: Text parsing mode (``"Markdown"``, ``"HTML"`` or
             ``None``)
         """
+
     def edit_reply_markup(
         self, message_id: int, markup: TG_ReplyMarkupOpts
     ) -> Awaitable[TG_MessageResponse]:
@@ -83,24 +87,29 @@ class Chat:
         :param int message_id: ID of the message to edit
         :param dict markup: Markup options
         """
+
     def get_chat(self) -> Awaitable[TG_GetChatResponse]:
         """
         Get information about the chat.
         """
+
     def get_chat_administrators(self) -> Awaitable[TG_GetChatAdministratorResponse]:
         """
         Get a list of administrators in a chat. Chat must not be private.
         """
+
     def get_chat_members_count(self) -> Awaitable[TG_GetChatMemberCountResponse]:
         """
         Get the number of members in a chat.
         """
+
     def get_chat_member(self, user_id: int) -> Awaitable[TG_GetChatMemberResponse]:
         """
         Get information about a member of a chat.
 
         :param int user_id: Unique identifier of the target user
         """
+
     def send_sticker(
         self, sticker: TG_SendFileInput, **options: Unpack[TG_SendStickerOpts]
     ) -> Awaitable[TG_MessageResponse]:
@@ -111,6 +120,7 @@ class Chat:
         :param options: Additional sendSticker options (see
             https://core.telegram.org/bots/api#sendsticker)
         """
+
     def send_audio(
         self, audio: TG_SendFileInput, **options: Unpack[TG_SendAudioOpts]
     ) -> Awaitable[TG_MessageResponse]:
@@ -126,6 +136,7 @@ class Chat:
         >>> with open("foo.mp3", "rb") as f:
         >>>     await chat.send_audio(f, performer="Foo", title="Eversong")
         """
+
     def send_photo(
         self,
         photo: TG_SendFileInput,
@@ -145,6 +156,7 @@ class Chat:
         >>> with open("foo.png", "rb") as f:
         >>>     await chat.send_photo(f, caption="Would you look at this!")
         """
+
     def send_video(
         self,
         video: TG_SendFileInput,
@@ -164,6 +176,7 @@ class Chat:
         >>> with open("foo.mp4", "rb") as f:
         >>>     await chat.send_video(f)
         """
+
     def send_document(
         self,
         document: TG_SendFileInput,
@@ -183,6 +196,7 @@ class Chat:
         >>> with open("file.doc", "rb") as f:
         >>>     await chat.send_document(f)
         """
+
     def send_voice(
         self, voice: TG_SendFileInput, **options: Unpack[TG_SendVoiceOpts]
     ) -> Awaitable[TG_MessageResponse]:
@@ -198,6 +212,7 @@ class Chat:
         >>> with open("voice.ogg", "rb") as f:
         >>>     await chat.send_voice(f)
         """
+
     def send_location(
         self, latitude: float, longitude: float, **options: Unpack[TG_SendLocationOpts]
     ) -> Awaitable[TG_MessageResponse]:
@@ -209,6 +224,7 @@ class Chat:
         :param options: Additional sendLocation options (see
             https://core.telegram.org/bots/api#sendlocation)
         """
+
     def send_venue(
         self,
         latitude: float,
@@ -227,6 +243,7 @@ class Chat:
         :param options: Additional sendVenue options (see
             https://core.telegram.org/bots/api#sendvenue)
         """
+
     def send_contact(
         self,
         phone_number: str,
@@ -241,6 +258,7 @@ class Chat:
         :param options: Additional sendContact options (see
             https://core.telegram.org/bots/api#sendcontact)
         """
+
     def send_chat_action(
         self,
         action: Literal[
@@ -269,6 +287,7 @@ class Chat:
 
         :param str action: Type of action to broadcast
         """
+
     def send_media_group(
         self,
         media: str,
@@ -305,6 +324,7 @@ class Chat:
         >>> }
         >>> await chat.send_media_group(dumps(tg_album))
         """
+
     def forward_message(
         self, from_chat_id: int, message_id: int
     ) -> Awaitable[TG_MessageResponse]:
@@ -314,6 +334,7 @@ class Chat:
         :param int from_chat_id: ID of the chat to forward the message from
         :param int message_id: ID of the message to forward
         """
+
     def kick_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
         """
         Use this method to kick a user from a group or a supergroup.
@@ -321,6 +342,7 @@ class Chat:
 
         :param int user_id: Unique identifier of the target user
         """
+
     def unban_chat_member(self, user_id: int) -> Awaitable[TG_BoolResponse]:
         """
         Use this method to unban a previously kicked user in a supergroup.
@@ -328,12 +350,14 @@ class Chat:
 
         :param int user_id: Unique identifier of the target user
         """
+
     def delete_message(self, message_id: int) -> Awaitable[TG_BoolResponse]:
         """
         Delete message from this chat
 
         :param int message_id: ID of the message
         """
+
     def is_group(self) -> bool:
         """
         Check if this chat is a group.

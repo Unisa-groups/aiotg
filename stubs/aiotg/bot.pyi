@@ -100,6 +100,7 @@ class Bot:
         >>> loop = asyncio.get_event_loop()
         >>> loop.create_task(bot.loop())
         """
+
     def run(self, debug: bool = False, reload: bool | None = None) -> None:
         """
         Convenience method for running bots in getUpdates mode
@@ -112,6 +113,7 @@ class Bot:
         >>>     bot.run()
 
         """
+
     def run_webhook(
         self, webhook_url: str, **options: Unpack[TG_SetWebhookOpts]
     ) -> None:
@@ -125,14 +127,17 @@ class Bot:
 
         Additional documentation on https://core.telegram.org/bots/api#setwebhook
         """
+
     def stop_webhook(self) -> None:
         """
         Use to switch from Webhook to getUpdates mode
         """
+
     def add_command(self, regexp: str, fn: CommandHandler) -> None:
         """
         Manually register regexp based command
         """
+
     def command(self, regexp: str) -> CommandDecorator:
         """
         Register a new command
@@ -145,6 +150,7 @@ class Bot:
         >>> def echo(chat, match):
         >>>     return chat.reply(match.group(1))
         """
+
     def default(self, callback: DefaultHandler) -> DefaultHandler:
         """
         Set callback for default command that is called on unrecognized
@@ -157,10 +163,12 @@ class Bot:
         >>> def echo(chat, message):
         >>>     return chat.reply(message["text"])
         """
+
     def add_inline(self, regexp: str, fn: RegexInlineHandler) -> None:
         """
         Manually register regexp based callback
         """
+
     @overload
     def inline(self, callback: DefaultInlineHandler) -> DefaultInlineHandler: ...
     @overload
@@ -171,6 +179,7 @@ class Bot:
         """
         Manually register regexp based callback for the ``chosen_inline_result`` updates
         """
+
     @overload
     def chosen_inline_result_callback(
         self, callback: DefaultChosenInlineResultHandler
@@ -183,6 +192,7 @@ class Bot:
         """
         Manually register regexp based callback
         """
+
     @overload
     def callback(self, callback: DefaultCallbackHandler) -> DefaultCallbackHandler: ...
     @overload
@@ -191,6 +201,7 @@ class Bot:
         """
         Manually register regexp based checkout handler
         """
+
     @overload
     def checkout(self, callback: DefaultCheckoutHandler) -> DefaultCheckoutHandler: ...
     @overload
@@ -205,24 +216,28 @@ class Bot:
         >>> def handle(chat, audio):
         >>>     pass
         """
+
     def channel(self, channel_name: str) -> Chat:
         """
         Construct a Chat object used to post to channel
 
         :param str channel_name: Channel name
         """
+
     def private(self, user_id: str) -> Chat:
         """
         Construct a Chat object used to post direct messages
 
         :param str user_id: User id
         """
+
     def group(self, group_id: str) -> Chat:
         """
         Construct a Chat object used to post group messages
 
         :param str group_id: Group chat id
         """
+
     def api_call(self, method: str, **params: Any) -> Awaitable[Any]:
         """
         Call Telegram API.
@@ -232,11 +247,13 @@ class Bot:
         :param str method: Telegram API method
         :param params: Arguments for the method call
         """
+
     async def get_me(self) -> TG_User:
         """
         Returns basic information about the bot
         (see https://core.telegram.org/bots/api#getme)
         """
+
     async def leave_chat(self, chat_id: int | str) -> bool:
         """
         Use this method for your bot to leave a group, supergroup or channel.
@@ -244,6 +261,7 @@ class Bot:
 
         :param int chat_id: Unique identifier for the target chat             or username of the target supergroup or channel             (in the format @channelusername)
         """
+
     def send_message(
         self, chat_id: int | str, text: str, **options: Unpack[TG_SendMessageOpts]
     ) -> Awaitable[TG_MessageResponse]:
@@ -255,6 +273,7 @@ class Bot:
         :param options: Additional sendMessage options
             (see https://core.telegram.org/bots/api#sendmessage)
         """
+
     def edit_message_text(
         self,
         chat_id: int | str,
@@ -270,6 +289,7 @@ class Bot:
         :param str text: Text to edit the message to
         :param options: Additional API options
         """
+
     def edit_message_reply_markup(
         self,
         chat_id: int | str,
@@ -285,6 +305,7 @@ class Bot:
         :param str reply_markup: New inline keyboard markup for the message
         :param options: Additional API options
         """
+
     async def get_file(self, file_id: int) -> TG_File:
         """
         Get basic information about a file and prepare it for downloading.
@@ -292,12 +313,14 @@ class Bot:
         :param int file_id: File identifier to get information about
         :return: File object (see https://core.telegram.org/bots/api#file)
         """
+
     def download_file(
         self, file_path: str, range: str | None = None
     ) -> _RequestContextManager:
         """
         Download a file from Telegram servers
         """
+
     def get_user_profile_photos(
         self, user_id: int, **options: Unpack[TG_GetUserProfilePhotosOpts]
     ) -> Awaitable[Any]:
@@ -308,6 +331,7 @@ class Bot:
         :param options: Additional getUserProfilePhotos options (see
             https://core.telegram.org/bots/api#getuserprofilephotos)
         """
+
     def stop(self) -> None: ...
     async def webhook_handle(self, request: web.Request) -> web.Response:
         """
@@ -319,12 +343,14 @@ class Bot:
         >>> app = web.Application()
         >>> app.router.add_route('/webhook')
         """
+
     def create_webhook_app(
         self, path: str, loop: asyncio.AbstractEventLoop | None = None
     ) -> web.Application:
         """
         Shorthand for creating aiohttp.web.Application with registered webhook hanlde
         """
+
     def set_webhook(
         self, webhook_url: str, **options: Unpack[TG_SetWebhookOpts]
     ) -> Awaitable[Any]:
@@ -334,10 +360,12 @@ class Bot:
         A newly generated UUID will be used as a secret_token parameter
         if it's not specified explicitly
         """
+
     def delete_webhook(self) -> Awaitable[Any]:
         """
         Tell Telegram to switch back to getUpdates mode
         """
+
     def on_cleanup(self, action: Callable[[], Any]) -> None:
         """
         You can set an action that will be executed before closing the loop
@@ -348,6 +376,7 @@ class Bot:
 
         >>> bot.on_cleanup(lambda: [t.cancel() for t in tasks])
         """
+
     @property
     def session(self) -> aiohttp.ClientSession: ...
 
