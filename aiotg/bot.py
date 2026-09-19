@@ -475,7 +475,7 @@ class Bot:
 
             return decorator
         else:
-            raise TypeError("str expected {} given".format(type(callback)))
+            raise TypeError(f"str expected {type(callback)} given")
 
     def add_inline(self, regexp: str, fn: RegexInlineHandler) -> None:
         """
@@ -653,7 +653,7 @@ class Bot:
         return asyncio.ensure_future(coro)
 
     async def _api_call(self, method: str, **params: Any) -> Any:
-        url = "{0}/bot{1}/{2}".format(API_URL, self.api_token, method)
+        url = f"{API_URL}/bot{self.api_token}/{method}"
         logger.debug("api_call %s, %s", method, params)
 
         payload = {
@@ -779,7 +779,7 @@ class Bot:
         Download a file from Telegram servers
         """
         headers: dict[str, Any] | None = {"range": range} if range else None
-        url = "{0}/file/bot{1}/{2}".format(API_URL, self.api_token, file_path)
+        url = f"{API_URL}/file/bot{self.api_token}/{file_path}"
         return self.session.get(url, headers=headers)
 
     def get_user_profile_photos(
@@ -1200,7 +1200,7 @@ class Bot:
             return
 
         for patterns, handler in self._commands:
-            m = re.search(patterns, message["text"], re.I)
+            m = re.search(patterns, message["text"], re.IGNORECASE)
             if m:
                 return handler(chat, m)
 
@@ -1213,7 +1213,7 @@ class Bot:
         iq = InlineQuery(self, query)
 
         for patterns, handler in self._inlines:
-            match = re.search(patterns, query["query"], re.I)
+            match = re.search(patterns, query["query"], re.IGNORECASE)
             if match:
                 return handler(iq, match)
         return self._default_inline(iq)
@@ -1221,7 +1221,7 @@ class Bot:
     def _process_chosen_inline_result(self, result: TG_ChosenInlineResultSrc) -> Any:
         cir = ChosenInlineResult(self, result)
         for patterns, handler in self._chosen_inline_result_callbacks:
-            match = re.search(patterns, result["query"], re.I)
+            match = re.search(patterns, result["query"], re.IGNORECASE)
             if match:
                 return handler(cir, match)
         return self._default_chosen_inline_result_callback(cir)
@@ -1230,7 +1230,7 @@ class Bot:
         chat = Chat.from_message(self, query["message"]) if "message" in query else None
         cq = CallbackQuery(self, query)
         for patterns, handler in self._callbacks:
-            match = re.search(patterns, cq.data, re.I)
+            match = re.search(patterns, cq.data, re.IGNORECASE)
             if match:
                 return handler(chat, cq, match)
 
@@ -1241,7 +1241,7 @@ class Bot:
         pcq = PreCheckoutQuery(self, query)
 
         for patterns, handler in self._checkouts:
-            match = re.search(patterns, pcq.invoice_payload, re.I)
+            match = re.search(patterns, pcq.invoice_payload, re.IGNORECASE)
             if match:
                 return handler(pcq, match)
         return self._default_checkout(pcq)
@@ -1317,7 +1317,7 @@ class InlineQuery:
     """
 
     def __init__(self, bot: "Bot", src: TG_InlineQuerySrc):
-        self.bot: "Bot" = bot
+        self.bot: Bot = bot
         self.sender: Sender = Sender(src["from"])
         self.query_id: str = src["id"]
         self.query: str = src["query"]
@@ -1337,8 +1337,8 @@ class InlineQuery:
 
 class ChosenInlineResult:
     def __init__(self, bot: "Bot", src: TG_ChosenInlineResultSrc) -> None:
-        self.bot: "Bot" = bot
-        self.sender: "Sender" = Sender(src["from"])
+        self.bot: Bot = bot
+        self.sender: Sender = Sender(src["from"])
         self.result_id: str = src["result_id"]
         self.location: TG_Location | None = src.get("location")
         self.inline_message_id: str | None = src.get("inline_message_id")
@@ -1347,7 +1347,7 @@ class ChosenInlineResult:
 
 class CallbackQuery:
     def __init__(self, bot: "Bot", src: TG_CallbackQuerySrc) -> None:
-        self.bot: "Bot" = bot
+        self.bot: Bot = bot
         self.query_id: str = src["id"]
         self.data: str = src.get("data", "")
         self.src: TG_CallbackQuerySrc = src
@@ -1360,7 +1360,7 @@ class CallbackQuery:
 
 class PreCheckoutQuery:
     def __init__(self, bot: "Bot", src: TG_PreCheckoutQuerySrc) -> None:
-        self.bot: "Bot" = bot
+        self.bot: Bot = bot
         self.sender: Sender = Sender(src["from"])
         self.query_id: str = src["id"]
         self.currency: str = src["currency"]

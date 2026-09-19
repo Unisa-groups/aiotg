@@ -1137,7 +1137,7 @@ class Chat:
             sender = src_message["sender_chat"]
         else:
             sender = {"first_name": "N/A"}
-        self.sender: "Sender" = Sender(sender)
+        self.sender: Sender = Sender(sender)
         self.id: int | str = chat_id
         self.type: Literal["private", "group", "supergroup", "channel"] = chat_type
 

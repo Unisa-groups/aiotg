@@ -1,8 +1,9 @@
 import asyncio
 import os
 import sys
+from collections.abc import Callable
 from os.path import realpath
-from typing import Any, Callable, Never, override
+from typing import Any, Never, override
 
 from watchdog.events import FileSystemEvent as Event
 from watchdog.events import PatternMatchingEventHandler as EventHandler
@@ -82,7 +83,7 @@ async def run_with_reloader(
     watcher.schedule(handler, path=path, recursive=True)
     watcher.start()
 
-    print("    (watching {})".format(path))
+    print(f"    (watching {path})")
 
     # Run watcher and coroutine together
     done, pending = await asyncio.wait(
