@@ -69,6 +69,13 @@ all = [
     "style"
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# ruff never flags `from aiotg.bot import *` itself (F403 isn't in its
+# default rule set here), so any noqa on that line always looks "unused"
+# to ruff's own RUF100 - but flake8 (the project's actual lint gate) does
+# need it, to suppress its real F401/F403 on the star-import.
+"aiotg/__init__.py" = ["RUF100"]
+
 [tool.black]
 exclude = '''
 /(

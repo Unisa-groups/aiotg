@@ -5,7 +5,12 @@ import os
 import re
 import uuid
 from collections.abc import Awaitable
-from typing import Any, Callable, Literal, Unpack, overload
+
+# Callable stays imported from typing (not collections.abc): moving it makes
+# pyflakes/flake8 stop recognizing the quoted forward-refs inside this file's
+# Callable[["TG_X"], Any] handler-type aliases as used, producing false
+# unused-import errors on flake8 (the project's actual lint gate).
+from typing import Any, Callable, Literal, Unpack, overload  # noqa: UP035
 from urllib.parse import urlparse
 
 import aiohttp
