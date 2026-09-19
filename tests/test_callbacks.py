@@ -14,6 +14,7 @@ from aiotg.types_ import (
     TG_InlineKeyboardMarkup,
     TG_InlineQuerySrc,
     TG_Message,
+    TG_PreCheckoutQuerySrc,
     TG_Response_Failure,
     TG_Update,
     TG_UpdateResponse,
@@ -62,6 +63,16 @@ def callback_query(data: str) -> TG_CallbackQuerySrc:
         "id": "9999",
         "message": custom_msg({}),
         "chat_instance": "",
+    }
+
+
+def pre_checkout_query(payload: str) -> TG_PreCheckoutQuerySrc:
+    return {
+        "id": "9999",
+        "from": {"first_name": "John", "is_bot": False, "id": 123},
+        "currency": "USD",
+        "total_amount": 100,
+        "invoice_payload": payload,
     }
 
 
@@ -141,6 +152,13 @@ def test_chosen_inline_result() -> None:
 
 def test_callback_default() -> None:
     bot._process_callback_query(callback_query("foo"))
+
+
+def test_pre_checkout_default() -> None:
+    # _default_checkout must be initialized in __init__, not only set when
+    # @bot.checkout is used directly - otherwise this raises AttributeError
+    # instead of quietly no-op'ing like every other default handler.
+    bot._process_pre_checkout_query(pre_checkout_query("foo"))
 
 
 def test_default_callback() -> None:

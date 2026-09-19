@@ -206,6 +206,7 @@ class Bot:
         self._default_chosen_inline_result_callback: (
             DefaultChosenInlineResultHandler
         ) = lambda res: None
+        self._default_checkout: DefaultCheckoutHandler = lambda pcq: None
         self._default_not_handled_update: DefaultNotHandledUpdateHandler = (
             lambda update: None
         )
