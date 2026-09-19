@@ -1161,5 +1161,5 @@ class Sender(dict[str, Any]):
     def __repr__(self) -> str:
         # "title" for a sender_chat, "first_name" for a user
         name = self.get("first_name") or self.get("title") or "N/A"
-        uname = " (%s)" % self["username"] if "username" in self else ""
+        uname = f" ({self['username']})" if "username" in self else ""
         return name + uname

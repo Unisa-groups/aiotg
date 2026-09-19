@@ -86,7 +86,7 @@ async def run_with_reloader(
     print(f"    (watching {path})")
 
     # Run watcher and coroutine together
-    done, pending = await asyncio.wait(
+    done, _pending = await asyncio.wait(
         [coroutine, handler.changed], return_when=asyncio.FIRST_COMPLETED
     )
 
