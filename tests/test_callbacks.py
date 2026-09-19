@@ -256,6 +256,33 @@ def test_handle(mt: str):
     assert called_with == value
 
 
+def test_handle_animation_wins_over_document() -> None:
+    """Telegram sets both 'animation' and 'document' on animation messages
+    for backward compatibility with older clients. The animation handler
+    must be the one that fires, not the document handler.
+    """
+    animation_called_with: Any = None
+    document_called_with: Any = None
+
+    @bot.handle("animation")
+    def _(_chat: Chat, media: Any) -> None:
+        nonlocal animation_called_with
+        animation_called_with = media
+
+    @bot.handle("document")
+    def _(_chat: Chat, media: Any) -> None:
+        nonlocal document_called_with
+        document_called_with = media
+
+    animation_value = "animation-sentinel"
+    document_value = "document-sentinel"
+    bot._process_message(
+        custom_msg({"animation": animation_value, "document": document_value})
+    )
+    assert animation_called_with == animation_value
+    assert document_called_with is None
+
+
 @pytest.mark.parametrize(
     "ctype,id", [("channel", "@foobar"), ("private", "111111"), ("group", "222222")]
 )

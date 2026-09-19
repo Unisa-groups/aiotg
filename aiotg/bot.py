@@ -112,6 +112,7 @@ RETRY_CODES = [429, 500, 502, 503, 504]
 MESSAGE_TYPES = [
     "location",
     "photo",
+    "animation",
     "document",
     "audio",
     "voice",
@@ -121,7 +122,6 @@ MESSAGE_TYPES = [
     "video",
     "game",
     "story",
-    "animation",
     "dice",
     "video_note",
     "poll",
