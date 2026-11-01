@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, AsyncMock, patch
 import aiohttp
 import pytest
 
-from aiotg import Bot
+from aiotg import Bot, BotApiError
 
 
 def test_api_call_preprocessing():
@@ -80,7 +80,9 @@ def _flood_body(retry_after):
 def _call_with_responses(responses):
     """Run one sendMessage against queued responses, with sleeping disabled.
 
-    Returns (result, number of POSTs made, the delays the bot slept for).
+    ``responses`` is a list, or a callable producing the next response.
+    Returns (outcome, number of POSTs made, the delays the bot slept for),
+    where outcome is the call's result, or the BotApiError it gave up with.
     """
     bot = Bot("token")
     session = AsyncMock()
@@ -89,9 +91,14 @@ def _call_with_responses(responses):
     bot._session = session
 
     with patch("aiotg.bot.asyncio.sleep", new=AsyncMock()) as sleep:
-        result = asyncio.run(bot._api_call("sendMessage", chat_id="123", text="hi"))
+        try:
+            outcome = asyncio.run(
+                bot._api_call("sendMessage", chat_id="123", text="hi")
+            )
+        except BotApiError as err:
+            outcome = err
 
-    return result, session.post.call_count, [c.args[0] for c in sleep.call_args_list]
+    return outcome, session.post.call_count, [c.args[0] for c in sleep.call_args_list]
 
 
 OK_BODY = {"ok": True, "result": {"message_id": 1}}
@@ -153,3 +160,42 @@ def test_flood_limit_is_retried_until_it_succeeds():
     assert result == OK_BODY
     assert posts == 6
     assert delays == [3, 5, 4, 7, 6]
+
+
+def _never_recovers(status):
+    """Responses that fail forever, unless the bot keeps retrying past its cap."""
+    posts = 0
+
+    def next_response(*args, **kwargs):
+        nonlocal posts
+        posts += 1
+        if posts > 101:
+            raise AssertionError("still retrying after the 100th retry")
+        return _api_response(status, _flood_body(1))
+
+    return next_response
+
+
+def test_succeeds_on_the_last_allowed_retry():
+    floods = [_api_response(429, _flood_body(1)) for _ in range(100)]
+
+    result, posts, delays = _call_with_responses(floods + [_api_response(200, OK_BODY)])
+
+    assert result == OK_BODY
+    assert posts == 101
+    assert delays == [3] * 100
+
+
+@pytest.mark.parametrize(
+    "status, want_delay",
+    [(429, 3), (503, 30)],
+    ids=["flood-limit", "server-error"],
+)
+def test_gives_up_with_an_error_after_100_retries(status, want_delay):
+    result, posts, delays = _call_with_responses(_never_recovers(status))
+
+    assert isinstance(result, BotApiError)
+    assert result.response.status == status
+    # The first attempt plus 100 retries, and no sleep after the last one
+    assert posts == 101
+    assert delays == [want_delay] * 100

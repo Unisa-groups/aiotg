@@ -111,6 +111,8 @@ DefaultMessageReactionCountHandler = Callable[["TG_MessageReactionCountUpdated"]
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
 RETRY_TIMEOUT = 30
+# Retries after the first attempt before an API call fails with BotApiError
+MAX_RETRIES = 100
 # Extra seconds on top of the wait Telegram asks for in a 429 response
 FLOOD_WAIT_PADDING = 2
 RETRY_CODES = [429, 500, 502, 503, 504]
@@ -669,32 +671,45 @@ class Bot:
             for k, v in params.items()
         }
 
-        response = await self.session.post(url, data=payload)
+        retries = 0
+        while True:
+            response = await self.session.post(url, data=payload)
 
-        if response.status == 200:
-            return await response.json(loads=self.json_deserialize)
-        elif response.status in RETRY_CODES:
-            delay = RETRY_TIMEOUT
-            if response.status == 429:
-                retry_after = await self._flood_retry_after(response)
-                if retry_after is not None:
-                    delay = retry_after + FLOOD_WAIT_PADDING
-            logger.info(
-                "Server returned %d, retrying in %d sec.",
-                response.status,
-                delay,
-            )
-            await response.release()
-            await asyncio.sleep(delay)
-            return await self.api_call(method, **params)
-        else:
-            if response.headers["content-type"] == "application/json":
-                json_resp = await response.json(loads=self.json_deserialize)
-                err_msg = json_resp["description"]
+            if response.status == 200:
+                return await response.json(loads=self.json_deserialize)
+            elif response.status in RETRY_CODES:
+                if retries >= MAX_RETRIES:
+                    await response.release()
+                    err_msg = (
+                        f"{method}: giving up after {MAX_RETRIES} retries, "
+                        f"server keeps returning {response.status}"
+                    )
+                    logger.error(err_msg)
+                    raise BotApiError(err_msg, response=response)
+
+                delay = RETRY_TIMEOUT
+                if response.status == 429:
+                    retry_after = await self._flood_retry_after(response)
+                    if retry_after is not None:
+                        delay = retry_after + FLOOD_WAIT_PADDING
+                retries += 1
+                logger.info(
+                    "Server returned %d, retrying in %d sec (retry %d/%d).",
+                    response.status,
+                    delay,
+                    retries,
+                    MAX_RETRIES,
+                )
+                await response.release()
+                await asyncio.sleep(delay)
             else:
-                err_msg = await response.read()
-            logger.error(err_msg)
-            raise BotApiError(err_msg, response=response)
+                if response.headers["content-type"] == "application/json":
+                    json_resp = await response.json(loads=self.json_deserialize)
+                    err_msg = json_resp["description"]
+                else:
+                    err_msg = await response.read()
+                logger.error(err_msg)
+                raise BotApiError(err_msg, response=response)
 
     async def _flood_retry_after(self, response: ClientResponse) -> int | None:
         """
