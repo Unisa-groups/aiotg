@@ -111,6 +111,8 @@ DefaultMessageReactionCountHandler = Callable[["TG_MessageReactionCountUpdated"]
 API_URL = "https://api.telegram.org"
 API_TIMEOUT = 60
 RETRY_TIMEOUT = 30
+# Extra seconds on top of the wait Telegram asks for in a 429 response
+FLOOD_WAIT_PADDING = 2
 RETRY_CODES = [429, 500, 502, 503, 504]
 
 # Message types to be handled by bot.handle(...)
@@ -672,13 +674,18 @@ class Bot:
         if response.status == 200:
             return await response.json(loads=self.json_deserialize)
         elif response.status in RETRY_CODES:
+            delay = RETRY_TIMEOUT
+            if response.status == 429:
+                retry_after = await self._flood_retry_after(response)
+                if retry_after is not None:
+                    delay = retry_after + FLOOD_WAIT_PADDING
             logger.info(
                 "Server returned %d, retrying in %d sec.",
                 response.status,
-                RETRY_TIMEOUT,
+                delay,
             )
             await response.release()
-            await asyncio.sleep(RETRY_TIMEOUT)
+            await asyncio.sleep(delay)
             return await self.api_call(method, **params)
         else:
             if response.headers["content-type"] == "application/json":
@@ -688,6 +695,23 @@ class Bot:
                 err_msg = await response.read()
             logger.error(err_msg)
             raise BotApiError(err_msg, response=response)
+
+    async def _flood_retry_after(self, response: ClientResponse) -> int | None:
+        """
+        Seconds Telegram asks us to wait after a 429, or None if it didn't say.
+
+        Telegram puts it in ``parameters.retry_after`` of the JSON body; the
+        ``Retry-After`` header is the fallback.
+        """
+        try:
+            body = await response.json(loads=self.json_deserialize)
+            return int(body["parameters"]["retry_after"])
+        except (aiohttp.ClientError, ValueError, KeyError, TypeError):
+            pass
+        try:
+            return int(response.headers["Retry-After"])
+        except (KeyError, ValueError, TypeError):
+            return None
 
     async def get_me(self) -> TG_User:
         """
